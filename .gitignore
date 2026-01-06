@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Outputs and temporary files
+outputs/
+*.log
+*.tmp
+
+# Model files (too large for git)
+# But keep vae-oid.npz as it's essential
+models/*.h5
+models/*.pkl
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data directories (usually too large)
+data/
+datasets/
