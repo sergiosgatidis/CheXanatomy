@@ -54,10 +54,6 @@ setup(
             "ipywidgets>=7.6.0",
             "pytest>=6.2.0",
         ],
-        "training": [
-            "wandb>=0.12.0",
-            "tensorboard>=2.8.0",
-        ],
     },
     python_requires=">=3.9",
     classifiers=[

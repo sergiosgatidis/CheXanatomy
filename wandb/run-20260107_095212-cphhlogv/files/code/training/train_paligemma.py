@@ -45,8 +45,8 @@ config = load_config(config_path)
 from paligemma_training_sample_generator import PaligemmaSampleGenerator
 from PIL import Image
 import torch
-import numpy as np
 import random
+import json
 from torch.utils.data import Dataset
 from transformers import PaliGemmaForConditionalGeneration, PaliGemmaProcessor, BitsAndBytesConfig, Trainer, TrainingArguments
 from peft import get_peft_model, LoraConfig
@@ -59,12 +59,9 @@ except ImportError:
     wandb_available = False
     print("wandb not available. Install with: pip install wandb")
 
-# Construct model_id from modular parameters
-model_id = f"google/paligemma-{config['model']['model_size']}b-pt-{config['model']['input_image_size']}"
-
 print("Starting Paligemma training script...")
 print(f"Using config: {config_path}")
-print(f"Using model: {model_id}")
+print(f"Using model: {config['model']['model_id']}")
 print(f"Training data path: {config['data']['training_data_path']}")
 
 # =============================================================================
@@ -125,12 +122,9 @@ class CheXanatomyDataset(Dataset):
                 enable_augmentation=self.enable_augmentation
             )
                         
-            # Get available structures from the NPZ file
-            data = np.load(img_info_path, allow_pickle=True)
-            img_info = {
-                "img_array": data["img_array"],
-                **data["metadata"].item()
-            }
+            # Get available structures from the image
+            with open(img_info_path, 'r') as f:
+                img_info = json.load(f)
             
             structures = list(img_info.get("structure_info", {}).keys())
             
@@ -165,7 +159,8 @@ class CheXanatomyDataset(Dataset):
             }
             
         except Exception as e:
-            # Try next file on error (silent to avoid spam)
+            print(f"Error processing file {self.file_paths[idx]}: {e}")
+            # Try next file on error
             return self.__getitem__((idx + 1) % len(self.file_paths))
 
 # =============================================================================
@@ -183,9 +178,7 @@ if wandb_available and config.get('wandb', {}).get('project'):
         project=config['wandb']['project'],
         # Track hyperparameters and run metadata
         config={
-            "model_id": model_id,
-            "model_size": config['model']['model_size'],
-            "input_image_size": config['model']['input_image_size'],
+            "model_id": config['model']['model_id'],
             "learning_rate": config['training']['learning_rate'],
             "num_epochs": config['training']['num_train_epochs'],
             "batch_size": config['training']['per_device_train_batch_size'],
@@ -213,7 +206,7 @@ else:
     print("⚠️ Wandb not configured - training will proceed without logging")
 
 # Load processor
-processor = PaliGemmaProcessor.from_pretrained(model_id)
+processor = PaliGemmaProcessor.from_pretrained(config['model']['model_id'])
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
 
@@ -229,14 +222,12 @@ else:
 
 # Load model
 model = PaliGemmaForConditionalGeneration.from_pretrained(
-    model_id,
+    config['model']['model_id'],
     attn_implementation='eager',
+    device_map="auto",
     quantization_config=bnb_config,
     torch_dtype=torch.bfloat16
 )
-
-# Move model to device
-model = model.to(device)
 
 # Apply LoRA if enabled
 if config['optimization']['use_lora'] or config['optimization']['use_qlora']:

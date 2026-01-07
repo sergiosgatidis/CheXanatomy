@@ -56,4 +56,4 @@ models/*.pkl
 
 # Data directories (usually too large)
 data/
-datasets/
+datasets/wandb/

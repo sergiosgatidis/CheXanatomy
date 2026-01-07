@@ -24,8 +24,8 @@ USAGE PATTERN:
 ```python
 from chexanatomy.paligemma_generator import PaligemmaSampleGenerator
 
-# Initialize with image info
-generator = PaligemmaSampleGenerator('/path/to/image_info.json')
+# Initialize with image info (NPZ files preferred for efficiency)
+generator = PaligemmaSampleGenerator('/path/to/case_data.npz')
 
 # Generate single sample
 sample = generator.generate_sample()
@@ -90,8 +90,8 @@ class PaligemmaSampleGenerator:
         Initialize the sample generator.
         
         Args:
-            image_info: Path to NPZ file, JSON file, or dict containing image information.
-                       NPZ files are preferred for smaller file sizes.
+            image_info: Path to NPZ file or dict containing image information.
+                       NPZ files provide efficient storage and fast loading.
             enable_augmentation: If True, apply random augmentation to images and update
                                all related coordinates and tokens accordingly.
             scale_range: Range for random scaling during augmentation (min_scale, max_scale).
@@ -176,22 +176,19 @@ class PaligemmaSampleGenerator:
         
         # Store transformation parameters for reference
         self.img_info["augmentation_params"] = transform_params
-        
-        print(f"Applied augmentation: scale={transform_params['scale_factor']:.3f}, "
-              f"offset=({transform_params['x_offset']}, {transform_params['y_offset']})")
     
     def _load_img_info(self, path: str) -> dict:
         """
-        Load image information from NPZ or JSON file.
+        Load image information from NPZ file.
         
         Args:
-            path: Path to the image information file (.npz or .json)
+            path: Path to the NPZ image information file
             
         Returns:
             dict: The reconstructed img_info dictionary
             
         Raises:
-            ValueError: If the file format is not supported
+            ValueError: If the file format is not NPZ
         """
         file_extension = os.path.splitext(path)[1].lower()
         
@@ -203,11 +200,8 @@ class PaligemmaSampleGenerator:
                 **data["metadata"].item()
             }
             return img_info
-        elif file_extension == ".json":
-            with open(path, 'r') as f:
-                return json.load(f)
         else:
-            raise ValueError(f"Unsupported file format: {file_extension}. Only .npz and .json files are supported.")
+            raise ValueError(f"Unsupported file format: {file_extension}. Only .npz files are supported.")
     
     def _get_anatomic_names(self) -> Dict[str, List[str]]:
         """Get anatomical name variations for structures"""
@@ -345,7 +339,7 @@ class PaligemmaSampleGenerator:
         try:
             return task_methods[task_name](structure)
         except Exception as e:
-            print(f"Error generating {task_name} task for {structure}: {e}")
+            # Silent error handling to avoid training spam
             return None
     
     def generate_detection_sample(self, structure: str) -> TrainingSample:
@@ -623,8 +617,14 @@ class PaligemmaSampleGenerator:
             PIL Image with segmentation mask drawn, or None if mask extraction fails
         """
         try:
+            # Force JAX to use CPU to avoid GPU memory conflicts
+            import os
+            os.environ['JAX_PLATFORM_NAME'] = 'cpu'
+            import jax
+            jax.config.update('jax_platform_name', 'cpu')
+            
             # Import decoder to extract mask from segmentation tokens
-            from decoder import extract_objs
+            from VQVAE_decoder_utils import extract_objs
             
             # Get image dimensions
             height, width = img_array.shape[:2]

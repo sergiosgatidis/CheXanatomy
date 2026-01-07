@@ -59,12 +59,9 @@ except ImportError:
     wandb_available = False
     print("wandb not available. Install with: pip install wandb")
 
-# Construct model_id from modular parameters
-model_id = f"google/paligemma-{config['model']['model_size']}b-pt-{config['model']['input_image_size']}"
-
 print("Starting Paligemma training script...")
 print(f"Using config: {config_path}")
-print(f"Using model: {model_id}")
+print(f"Using model: {config['model']['model_id']}")
 print(f"Training data path: {config['data']['training_data_path']}")
 
 # =============================================================================
@@ -183,9 +180,7 @@ if wandb_available and config.get('wandb', {}).get('project'):
         project=config['wandb']['project'],
         # Track hyperparameters and run metadata
         config={
-            "model_id": model_id,
-            "model_size": config['model']['model_size'],
-            "input_image_size": config['model']['input_image_size'],
+            "model_id": config['model']['model_id'],
             "learning_rate": config['training']['learning_rate'],
             "num_epochs": config['training']['num_train_epochs'],
             "batch_size": config['training']['per_device_train_batch_size'],
@@ -213,7 +208,7 @@ else:
     print("⚠️ Wandb not configured - training will proceed without logging")
 
 # Load processor
-processor = PaliGemmaProcessor.from_pretrained(model_id)
+processor = PaliGemmaProcessor.from_pretrained(config['model']['model_id'])
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
 
@@ -229,14 +224,12 @@ else:
 
 # Load model
 model = PaliGemmaForConditionalGeneration.from_pretrained(
-    model_id,
+    config['model']['model_id'],
     attn_implementation='eager',
+    device_map="auto",
     quantization_config=bnb_config,
     torch_dtype=torch.bfloat16
 )
-
-# Move model to device
-model = model.to(device)
 
 # Apply LoRA if enabled
 if config['optimization']['use_lora'] or config['optimization']['use_qlora']:

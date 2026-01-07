@@ -3,12 +3,12 @@
 
 # Model Configuration
 model:
-  model_id: "google/paligemma-3b-pt-224"
-  input_image_size: 224
+  model_size: 3          # Available: 3, 10, 28 (for 3b, 10b, 28b models)
+  input_image_size: 224  # Available: 224, 448, 896
   
 # Training Data
 data:
-  training_data_path: "./outputs"
+  training_data_path: "/mnt/SSD2/CT-RATE/processed/CT_RATE_training_data"
   train_val_split: 0.1  # 10% for validation
   enable_augmentation: true
   
@@ -39,7 +39,7 @@ logging:
   save_steps: 500
   eval_steps: 500
   save_total_limit: 3
-  run_name: "chexanatomy_paligemma_v1"
+  run_name: "chexanatomy_paligemma_testrun"
 
 # Optimization Strategy
 optimization:
@@ -58,15 +58,22 @@ optimization:
 
 # Paths
 paths:
-  model_output_dir: "./models/paligemma_finetuned"
+  model_output_dir: "/mnt/SSD2/Paligemma_models"
   vqvae_model_path: "./models/vae-oid.npz"
 
-# Wandb Configuration (optional)
+# Wandb Configuration
 wandb:
-  project: "chexanatomy-paligemma"
-  entity: null  # Set to your wandb username/team
+  project: "cheXanatomy"
+  entity: "sergiosgatidis"
   tags: 
     - "paligemma"
     - "chest-xray"
     - "anatomy"
-  notes: "Paligemma fine-tuning on chest X-ray anatomy detection and segmentation"
+    - "vision-language"
+    - "medical-ai"
+  notes: "Paligemma fine-tuning on chest X-ray anatomy detection and segmentation using CT-RATE dataset"
+  
+  # Logging configuration
+  log_model: true          # Save model checkpoints to wandb
+  log_freq: 50            # Log metrics every N steps
+  save_code: true         # Save training script to wandb

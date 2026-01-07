@@ -1,0 +1,219 @@
+diff --git a/config.yaml b/config.yaml
+index 018ec93..8157987 100644
+--- a/config.yaml
++++ b/config.yaml
+@@ -8,7 +8,7 @@ model:
+   
+ # Training Data
+ data:
+-  training_data_path: "./outputs"
++  training_data_path: "/mnt/SSD2/CT-RATE/processed/CT_RATE_training_data"
+   train_val_split: 0.1  # 10% for validation
+   enable_augmentation: true
+   
+@@ -39,7 +39,7 @@ logging:
+   save_steps: 500
+   eval_steps: 500
+   save_total_limit: 3
+-  run_name: "chexanatomy_paligemma_v1"
++  run_name: "chexanatomy_paligemma_testrun"
+ 
+ # Optimization Strategy
+ optimization:
+@@ -58,15 +58,22 @@ optimization:
+ 
+ # Paths
+ paths:
+-  model_output_dir: "./models/paligemma_finetuned"
++  model_output_dir: "/mnt/SSD2/Paligemma_models"
+   vqvae_model_path: "./models/vae-oid.npz"
+ 
+-# Wandb Configuration (optional)
++# Wandb Configuration
+ wandb:
+-  project: "chexanatomy-paligemma"
+-  entity: null  # Set to your wandb username/team
++  project: "cheXanatomy"
++  entity: "sergiosgatidis"
+   tags: 
+     - "paligemma"
+     - "chest-xray"
+     - "anatomy"
+-  notes: "Paligemma fine-tuning on chest X-ray anatomy detection and segmentation"
+\ No newline at end of file
++    - "vision-language"
++    - "medical-ai"
++  notes: "Paligemma fine-tuning on chest X-ray anatomy detection and segmentation using CT-RATE dataset"
++  
++  # Logging configuration
++  log_model: true          # Save model checkpoints to wandb
++  log_freq: 50            # Log metrics every N steps
++  save_code: true         # Save training script to wandb
+\ No newline at end of file
+diff --git a/paligemma_training_data/paligemma_training_sample_generator.py b/paligemma_training_data/paligemma_training_sample_generator.py
+index a98364c..0422370 100644
+--- a/paligemma_training_data/paligemma_training_sample_generator.py
++++ b/paligemma_training_data/paligemma_training_sample_generator.py
+@@ -24,8 +24,8 @@ USAGE PATTERN:
+ ```python
+ from chexanatomy.paligemma_generator import PaligemmaSampleGenerator
+ 
+-# Initialize with image info
+-generator = PaligemmaSampleGenerator('/path/to/image_info.json')
++# Initialize with image info (NPZ files preferred for efficiency)
++generator = PaligemmaSampleGenerator('/path/to/case_data.npz')
+ 
+ # Generate single sample
+ sample = generator.generate_sample()
+@@ -90,8 +90,8 @@ class PaligemmaSampleGenerator:
+         Initialize the sample generator.
+         
+         Args:
+-            image_info: Path to NPZ file, JSON file, or dict containing image information.
+-                       NPZ files are preferred for smaller file sizes.
++            image_info: Path to NPZ file or dict containing image information.
++                       NPZ files provide efficient storage and fast loading.
+             enable_augmentation: If True, apply random augmentation to images and update
+                                all related coordinates and tokens accordingly.
+             scale_range: Range for random scaling during augmentation (min_scale, max_scale).
+@@ -182,16 +182,16 @@ class PaligemmaSampleGenerator:
+     
+     def _load_img_info(self, path: str) -> dict:
+         """
+-        Load image information from NPZ or JSON file.
++        Load image information from NPZ file.
+         
+         Args:
+-            path: Path to the image information file (.npz or .json)
++            path: Path to the NPZ image information file
+             
+         Returns:
+             dict: The reconstructed img_info dictionary
+             
+         Raises:
+-            ValueError: If the file format is not supported
++            ValueError: If the file format is not NPZ
+         """
+         file_extension = os.path.splitext(path)[1].lower()
+         
+@@ -203,11 +203,8 @@ class PaligemmaSampleGenerator:
+                 **data["metadata"].item()
+             }
+             return img_info
+-        elif file_extension == ".json":
+-            with open(path, 'r') as f:
+-                return json.load(f)
+         else:
+-            raise ValueError(f"Unsupported file format: {file_extension}. Only .npz and .json files are supported.")
++            raise ValueError(f"Unsupported file format: {file_extension}. Only .npz files are supported.")
+     
+     def _get_anatomic_names(self) -> Dict[str, List[str]]:
+         """Get anatomical name variations for structures"""
+diff --git a/setup.py b/setup.py
+index 4c79632..cb29cf3 100644
+--- a/setup.py
++++ b/setup.py
+@@ -54,10 +54,6 @@ setup(
+             "ipywidgets>=7.6.0",
+             "pytest>=6.2.0",
+         ],
+-        "training": [
+-            "wandb>=0.12.0",
+-            "tensorboard>=2.8.0",
+-        ],
+     },
+     python_requires=">=3.9",
+     classifiers=[
+diff --git a/training/train_paligemma.py b/training/train_paligemma.py
+index b1450d3..a062c05 100644
+--- a/training/train_paligemma.py
++++ b/training/train_paligemma.py
+@@ -40,6 +40,8 @@ args = parser.parse_args()
+ # Load configuration
+ config_path = os.path.join(os.path.dirname(__file__), '..', args.config)
+ config = load_config(config_path)
++
++# Import required modules
+ from paligemma_training_sample_generator import PaligemmaSampleGenerator
+ from PIL import Image
+ import torch
+@@ -67,19 +69,19 @@ print(f"Training data path: {config['data']['training_data_path']}")
+ # =============================================================================
+ 
+ def find_image_info_files(data_path):
+-    """Find all image_info.json files in the data directory"""
++    """Find all .npz training files in the data directory"""
+     data_path = Path(data_path)
+     if not data_path.exists():
+         raise FileNotFoundError(f"Training data path does not exist: {data_path}")
+     
+-    # Look for image_info.json files
+-    json_files = list(data_path.glob("**/image_info.json"))
++    # Look for .npz files
++    npz_files = list(data_path.glob("**/*.npz"))
+     
+-    if not json_files:
+-        raise FileNotFoundError(f"No image_info.json files found in {data_path}")
++    if not npz_files:
++        raise FileNotFoundError(f"No .npz training files found in {data_path}")
+     
+-    print(f"Found {len(json_files)} image_info.json files")
+-    return [str(f) for f in json_files]
++    print(f"Found {len(npz_files)} .npz training files")
++    return [str(f) for f in npz_files]
+ 
+ # Find all training data files
+ file_paths = find_image_info_files(config['data']['training_data_path'])
+@@ -116,8 +118,7 @@ class CheXanatomyDataset(Dataset):
+             
+             # Initialize generator with this file
+             generator = PaligemmaSampleGenerator(
+-                img_info_path=img_info_path,
+-                vqvae_model_path=config['paths']['vqvae_model_path'],
++                image_info=img_info_path,
+                 enable_augmentation=self.enable_augmentation
+             )
+                         
+@@ -171,13 +172,38 @@ print("Loading model and processor...")
+ # Initialize wandb if available and configured
+ if wandb_available and config.get('wandb', {}).get('project'):
+     wandb.init(
++        # Set the wandb entity where your project will be logged
++        entity=config['wandb']['entity'],
++        # Set the wandb project where this run will be logged
+         project=config['wandb']['project'],
+-        entity=config['wandb'].get('entity'),
+-        config=config,
++        # Track hyperparameters and run metadata
++        config={
++            "model_id": config['model']['model_id'],
++            "learning_rate": config['training']['learning_rate'],
++            "num_epochs": config['training']['num_train_epochs'],
++            "batch_size": config['training']['per_device_train_batch_size'],
++            "gradient_accumulation_steps": config['training']['gradient_accumulation_steps'],
++            "warmup_steps": config['training']['warmup_steps'],
++            "weight_decay": config['training']['weight_decay'],
++            "use_lora": config['optimization']['use_lora'],
++            "use_qlora": config['optimization']['use_qlora'],
++            "lora_r": config['optimization']['lora_r'],
++            "freeze_vision": config['optimization']['freeze_vision'],
++            "dataset": "CT-RATE",
++            "architecture": "PaliGemmaV2",
++            "training_data_path": config['data']['training_data_path'],
++            "enable_augmentation": config['data']['enable_augmentation'],
++            "available_tasks": config['data']['available_tasks'],
++        },
+         tags=config['wandb'].get('tags', []),
+-        notes=config['wandb'].get('notes', '')
++        notes=config['wandb'].get('notes', ''),
++        name=config['logging']['run_name'],  # Set run name
++        save_code=config['wandb'].get('save_code', True)  # Save code for reproducibility
+     )
+-    print("Wandb initialized")
++    print("✅ Wandb initialized successfully")
++    print(f"🌐 Track progress: https://wandb.ai/{config['wandb']['entity']}/{config['wandb']['project']}")
++else:
++    print("⚠️ Wandb not configured - training will proceed without logging")
+ 
+ # Load processor
+ processor = PaliGemmaProcessor.from_pretrained(config['model']['model_id'])
