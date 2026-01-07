@@ -1,3 +1,40 @@
+# Core Dependencies
 numpy>=1.20.0
 Pillow>=8.0.0
 tensorflow>=2.8.0
+
+# Data Processing & Augmentation
+scipy>=1.7.0
+opencv-python>=4.5.0
+scikit-image>=0.18.0
+
+# Visualization & Analysis
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# Training & Machine Learning
+transformers>=4.20.0
+torch>=1.12.0
+torchvision>=0.13.0
+
+# Data Handling & Utilities
+pandas>=1.3.0
+tqdm>=4.60.0
+PyYAML>=6.0
+
+# Image & File I/O
+imageio>=2.15.0
+h5py>=3.6.0
+
+# Development & Testing (Optional)
+jupyter>=1.0.0
+ipywidgets>=7.6.0
+pytest>=6.2.0
+
+# GPU Acceleration (Optional - for CUDA support)
+# Uncomment if using GPU acceleration
+# tensorflow-gpu>=2.8.0
+
+# Model Training (Optional - for advanced training features)
+# wandb>=0.12.0  # For experiment tracking
+# tensorboard>=2.8.0  # For training visualization
