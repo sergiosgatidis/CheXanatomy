@@ -12,10 +12,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-# Add src directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+# Add paligemma_training_data directory to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'paligemma_training_data'))
 
-from paligemma_generator import PaligemmaSampleGenerator
+from paligemma_training_sample_generator import PaligemmaSampleGenerator
 
 
 def visualize_comparison(original_generator, augmented_generator, structure='heart'):

@@ -82,7 +82,7 @@ def get_segmentation_token(mask: np.ndarray) -> Optional[str]:
     Returns:
         str: Segmentation token string in the format '<loc...><seg...><seg...>...'
     """
-    from .vqvae import get_VQVAE_checkpoint, encode_to_codebook_indices, resize_mask_for_encoding
+    from VQVAE_encoder_utils import get_VQVAE_checkpoint, encode_to_codebook_indices, resize_mask_for_encoding
     
     bbox = get_bounding_box(mask, normalized=False)
     bbox_token = get_bounding_box_token(mask)

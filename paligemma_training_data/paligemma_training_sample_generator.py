@@ -52,10 +52,13 @@ import json
 import os
 from typing import Dict, List, Optional, Union, Tuple
 from dataclasses import dataclass
+import sys
 
-from anatomy import (get_bounding_box_token, get_segmentation_token, get_bounding_box,
-                    augment_image_with_random_scale_and_position, augment_bounding_box,
-                    update_bounding_box_token, update_segmentation_token)
+# Add utils directory to path for imports
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'utils'))
+from anatomy_utils import (get_bounding_box_token, get_segmentation_token, get_bounding_box,
+                          augment_image_with_random_scale_and_position, augment_bounding_box,
+                          update_bounding_box_token, update_segmentation_token)
 
 
 @dataclass

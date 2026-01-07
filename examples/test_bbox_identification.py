@@ -5,9 +5,9 @@ Test script for the new bbox_identification task
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'paligemma_training_data'))
 
-from paligemma_generator import PaligemmaSampleGenerator
+from paligemma_training_sample_generator import PaligemmaSampleGenerator
 import matplotlib.pyplot as plt
 import numpy as np
 

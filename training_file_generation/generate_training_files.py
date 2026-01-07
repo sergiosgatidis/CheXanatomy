@@ -8,8 +8,11 @@ import numpy as np
 import json
 from PIL import Image
 from typing import Dict, List, Optional
+import sys
 
-from chexanatomy.anatomy import get_bounding_box_token, get_segmentation_token, get_bounding_box
+# Add utils directory to path for imports
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'utils'))
+from anatomy_utils import get_bounding_box_token, get_segmentation_token, get_bounding_box
 
 
 def get_image_info(case_dir: str, export_npz: bool = False, npz_path: str = None, flip: bool = False) -> dict:

@@ -1,7 +1,7 @@
 # Wandb Sweep Configuration for Paligemma Hyperparameter Optimization
 # Usage: wandb sweep sweep_config.yaml
 
-program: scripts/train_paligemma.py
+program: training/train_paligemma.py
 method: bayes  # bayes, grid, or random
 
 # Metric to optimize

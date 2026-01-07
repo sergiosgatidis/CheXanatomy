@@ -7,7 +7,11 @@ Script to process multiple chest X-ray cases and create NPZ files for Paligemma 
 import os
 import argparse
 from pathlib import Path
-from anatomy_training_data import get_image_info
+import sys
+
+# Add the training_file_generation directory to path for imports
+sys.path.append(os.path.dirname(__file__))
+from generate_training_files import get_image_info
 
 
 def extract_npz_files(input_dir: str, output_dir: str = "npz_files"):

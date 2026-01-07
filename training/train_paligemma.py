@@ -5,7 +5,7 @@ This script provides a streamlined approach to fine-tuning Paligemma models
 on chest X-ray anatomy data using our PaligemmaSampleGenerator.
 
 Usage:
-    python scripts/train_paligemma.py [--config path/to/config.yaml]
+    python training/train_paligemma.py [--config path/to/config.yaml]
 
 Requirements:
     - transformers
@@ -22,8 +22,8 @@ import argparse
 from pathlib import Path
 
 # Add the src directory to the path so we can import our modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'paligemma_training_data'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__))))
 
 def load_config(config_path):
     """Load configuration from YAML file"""
@@ -40,7 +40,7 @@ args = parser.parse_args()
 # Load configuration
 config_path = os.path.join(os.path.dirname(__file__), '..', args.config)
 config = load_config(config_path)
-from src.paligemma_generator import PaligemmaSampleGenerator
+from paligemma_training_sample_generator import PaligemmaSampleGenerator
 from PIL import Image
 import torch
 import random
