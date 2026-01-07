@@ -1,0 +1,72 @@
+# CheXanatomy Paligemma Training Configuration
+# This YAML file contains all configuration parameters for training
+
+# Model Configuration
+model:
+  model_id: "google/paligemma-3b-pt-224"
+  input_image_size: 224
+  
+# Training Data
+data:
+  training_data_path: "./outputs"
+  train_val_split: 0.1  # 10% for validation
+  enable_augmentation: true
+  
+  # Available task types for training
+  available_tasks:
+    - "detection"
+    - "segmentation" 
+    - "bbox_token_identification"
+    - "mask_token_identification"
+    - "bbox_identification"
+    - "mask_identification"
+    - "orientation_identification"
+
+# Training Hyperparameters
+training:
+  num_train_epochs: 3
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 5.0e-5
+  weight_decay: 0.01
+  adam_beta2: 0.999
+  warmup_steps: 2
+
+# Logging and Saving
+logging:
+  logging_steps: 10
+  save_steps: 500
+  eval_steps: 500
+  save_total_limit: 3
+  run_name: "chexanatomy_paligemma_v1"
+
+# Optimization Strategy
+optimization:
+  use_lora: true
+  use_qlora: false
+  freeze_vision: true
+  lora_r: 16
+  lora_target_modules:
+    - "q_proj"
+    - "o_proj" 
+    - "k_proj"
+    - "v_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+
+# Paths
+paths:
+  model_output_dir: "./models/paligemma_finetuned"
+  vqvae_model_path: "./models/vae-oid.npz"
+
+# Wandb Configuration (optional)
+wandb:
+  project: "chexanatomy-paligemma"
+  entity: null  # Set to your wandb username/team
+  tags: 
+    - "paligemma"
+    - "chest-xray"
+    - "anatomy"
+  notes: "Paligemma fine-tuning on chest X-ray anatomy detection and segmentation"

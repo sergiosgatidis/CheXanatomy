@@ -1,0 +1,43 @@
+# Wandb Sweep Configuration for Paligemma Hyperparameter Optimization
+# Usage: wandb sweep sweep_config.yaml
+
+program: scripts/train_paligemma.py
+method: bayes  # bayes, grid, or random
+
+# Metric to optimize
+metric:
+  goal: minimize
+  name: eval_loss
+
+# Parameter search space
+parameters:
+  training.learning_rate:
+    distribution: log_uniform_values
+    min: 1e-6
+    max: 1e-3
+  
+  training.weight_decay:
+    values: [0.0, 0.01, 0.1]
+  
+  training.per_device_train_batch_size:
+    values: [2, 4, 8]
+    
+  training.gradient_accumulation_steps:
+    values: [2, 4, 8]
+    
+  optimization.lora_r:
+    values: [8, 16, 32, 64]
+    
+  optimization.freeze_vision:
+    values: [true, false]
+    
+  data.enable_augmentation:
+    values: [true, false]
+
+# Early termination
+early_terminate:
+  type: hyperband
+  min_iter: 3
+
+# Run configuration
+run_cap: 20  # Maximum number of runs

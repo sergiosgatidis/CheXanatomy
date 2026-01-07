@@ -1,11 +1,11 @@
-# CheXtrain: Chest X-ray VLM Training Data Generator
+# CheXanatomy: Chest X-ray VLM Training Data Generator
 
 A minimal training data generation pipeline for chest X-ray analysis, based on anatomical structure detection and location token generation.
 
 ## Project Structure
 
 ```
-cheXtrain/
+cheXanatomy/
 ├── README.md              # This file
 ├── requirements.txt       # Python dependencies
 ├── src/                   # Core modules
@@ -21,19 +21,39 @@ cheXtrain/
 └── old_code/            # Original reference code (not tracked)
 ```
 
-## Features
+## Core Training Tasks (Original Design)
 
-- Real VQVAE-based segmentation token generation
-- Paligemma-compatible location token format (`<loc0000>`)
-- Multiple training task types (localization, segmentation, detection)
-- Modular, clean code structure
+Based on the proven task_definitions.py approach, the system generates 4 core task types:
+
+1. **Detection**: `detect heart` → `<loc0400><loc0312><loc0703><loc0625> heart`
+2. **Segmentation**: `segment lung` → `<seg045><seg023>...<seg089> lung`  
+3. **Bbox Token Identification**: `caption <loc0400>...` → `heart`
+4. **Mask Token Identification**: `caption <seg045>...` → `lung`
+
+## Pipeline Integration
+
+The generator is designed for **direct pipeline feeding** with optional file output:
+
+```python
+from chexanatomy import PaligemmaSampleGenerator
+
+# Initialize with image data
+generator = PaligemmaSampleGenerator(image_info)
+
+# Generate training batch for pipeline
+samples = generator.generate_training_batch(batch_size=32)
+
+# Each sample has: prefix, suffix, image, task_type, structure
+for sample in samples:
+    train_pipeline(sample.prefix, sample.suffix, sample.image)
+```
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/sergiosgatidis/cheXtrain.git
-cd cheXtrain
+git clone https://github.com/sergiosgatidis/cheXanatomy.git
+cd cheXanatomy
 ```
 
 2. Install the package in editable mode:
@@ -41,21 +61,31 @@ cd cheXtrain
 pip install -e .
 ```
 
-This will install the `chextrain` package with all dependencies.
+This will install the `chexanatomy` package with all dependencies.
 
 ## Usage
 
-### Process CheXsynth Data Format
+### For Training Pipeline Integration
 
 ```bash
-# Navigate to scripts directory
-cd scripts
+# Generate samples for direct pipeline feeding
+python scripts/paligemma_training_generator.py --image_info outputs/image_info.json --num_samples 1000
 
-# Process a single case
-python anatomy_training_data.py --single_case /path/to/case_directory
+# Process case directory directly
+python scripts/paligemma_training_generator.py --case_dir /path/to/case --num_samples 100
+
+# Demo mode (testing)
+python scripts/paligemma_training_generator.py --image_info outputs/image_info.json --demo
+```
+
+### Basic Data Processing
+
+```bash
+# Process a single case to create image_info.json
+python scripts/anatomy_training_data.py --single_case /path/to/case_directory
 
 # Process multiple cases
-python anatomy_training_data.py --input_dir /path/to/cases --output_dir ../outputs/my_training_data
+python scripts/anatomy_training_data.py --input_dir /path/to/cases --output_dir outputs/data
 ```
 
 ### Expected Data Format
