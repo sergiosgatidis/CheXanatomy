@@ -34,10 +34,11 @@ def get_image_info(case_dir: str, export_npz: bool = False, npz_path: str = None
     # Check current directory and parent directories for PA/LR indicators
     path_parts = os.path.normpath(case_dir).split(os.sep)
     for part in path_parts:
-        if part.upper() == "PA":
+        part_upper = part.upper()
+        if "PA" in part_upper:
             orientation = "PA"
             break
-        elif part.upper() == "LR" or part.upper() == "LAT":
+        elif "LR" in part_upper or "LAT" in part_upper:
             orientation = "LR"
             break
     

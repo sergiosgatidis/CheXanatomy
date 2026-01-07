@@ -120,12 +120,16 @@ class CheXanatomyDataset(Dataset):
                 vqvae_model_path=config['paths']['vqvae_model_path'],
                 enable_augmentation=self.enable_augmentation
             )
-            
+                        
             # Get available structures from the image
             with open(img_info_path, 'r') as f:
                 img_info = json.load(f)
             
             structures = list(img_info.get("structure_info", {}).keys())
+            
+            # Exclude specific structures that are not useful for training
+            excluded_structures = ['torso_fat', 'subcutaneous_fat', 'intervertebral_discs']
+            structures = [s for s in structures if s not in excluded_structures]
             
             if not structures:
                 # If no structures, try next file

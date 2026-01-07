@@ -35,6 +35,16 @@ def extract_npz_files(input_dir: str, output_dir: str = "npz_files"):
     print(f"Processing {len(case_dirs)} cases...")
     print(f"Output directory: {output_dir}")
     
+    # Detect orientation from input directory path
+    orientation_suffix = ""
+    if "PA" in input_dir.upper():
+        orientation_suffix = "_PA"
+    elif "LR" in input_dir.upper() or "LAT" in input_dir.upper():
+        orientation_suffix = "_LR"
+    
+    if orientation_suffix:
+        print(f"Detected orientation: {orientation_suffix.strip('_')}")
+    
     successful_cases = 0
     failed_cases = 0
     
@@ -44,13 +54,14 @@ def extract_npz_files(input_dir: str, output_dir: str = "npz_files"):
             case_name = os.path.basename(case_dir)
             print(f"Processing case: {case_name}")
             
-            # Define NPZ output path
-            npz_path = os.path.join(output_dir, f"{case_name}.npz")
+            # Define NPZ output path with orientation suffix
+            npz_filename = f"{case_name}{orientation_suffix}.npz"
+            npz_path = os.path.join(output_dir, npz_filename)
             
             # Get image info and export as NPZ
             image_info = get_image_info(case_dir, export_npz=True, npz_path=npz_path)
             
-            print(f"  ✅ Saved {case_name}.npz ({image_info['num_structures']} structures)")
+            print(f"  ✅ Saved {npz_filename} ({image_info['num_structures']} structures)")
             successful_cases += 1
             
         except Exception as e:
@@ -112,13 +123,21 @@ Examples:
         # Create output directory
         os.makedirs(args.output_dir, exist_ok=True)
         
+        # Detect orientation from case path
+        orientation_suffix = ""
+        if "PA" in args.single_case.upper():
+            orientation_suffix = "_PA"
+        elif "LR" in args.single_case.upper() or "LAT" in args.single_case.upper():
+            orientation_suffix = "_LR"
+        
         case_name = os.path.basename(args.single_case)
-        npz_path = os.path.join(args.output_dir, f"{case_name}.npz")
+        npz_filename = f"{case_name}{orientation_suffix}.npz"
+        npz_path = os.path.join(args.output_dir, npz_filename)
         
         try:
             print(f"Processing single case: {case_name}")
             image_info = get_image_info(args.single_case, export_npz=True, npz_path=npz_path)
-            print(f"✅ Saved {case_name}.npz ({image_info['num_structures']} structures)")
+            print(f"✅ Saved {npz_filename} ({image_info['num_structures']} structures)")
             print(f"📁 NPZ file saved to: {npz_path}")
         except Exception as e:
             print(f"❌ Error processing {args.single_case}: {e}")

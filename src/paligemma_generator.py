@@ -53,9 +53,9 @@ import os
 from typing import Dict, List, Optional, Union, Tuple
 from dataclasses import dataclass
 
-from chexanatomy.anatomy import (get_bounding_box_token, get_segmentation_token, get_bounding_box,
-                                augment_image_with_random_scale_and_position, augment_bounding_box,
-                                update_bounding_box_token, update_segmentation_token)
+from anatomy import (get_bounding_box_token, get_segmentation_token, get_bounding_box,
+                    augment_image_with_random_scale_and_position, augment_bounding_box,
+                    update_bounding_box_token, update_segmentation_token)
 
 
 @dataclass
