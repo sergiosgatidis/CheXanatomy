@@ -60,7 +60,7 @@ except ImportError:
     print("wandb not available. Install with: pip install wandb")
 
 # Construct model_id from modular parameters
-model_id = f"google/paligemma-{config['model']['model_size']}b-pt-{config['model']['input_image_size']}"
+model_id = f"google/paligemma2-{config['model']['model_size']}b-pt-{config['model']['input_image_size']}"
 
 print("Starting Paligemma training script...")
 print(f"Using config: {config_path}")
@@ -346,5 +346,15 @@ if __name__ == "__main__":
     
     print(f"Training completed! Model saved to: {final_model_path}")
     
+    # Log model as wandb artifact for lineage tracking
     if wandb_available and config.get('wandb', {}).get('project'):
+        model_artifact = wandb.Artifact(
+            name=f"paligemma2-{config['model']['model_size']}b-{config['model']['input_image_size']}", 
+            type="model",
+            description=f"Fine-tuned PaliGemma2 {config['model']['model_size']}b model with {config['model']['input_image_size']} input size for chest X-ray anatomy tasks"
+        )
+        model_artifact.add_dir(final_model_path)
+        wandb.log_artifact(model_artifact)
+        print(f"✅ Model logged to wandb as artifact: {model_artifact.name}")
+        
         wandb.finish()
