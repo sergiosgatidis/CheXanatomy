@@ -122,7 +122,8 @@ class CheXanatomyDataset(Dataset):
             # Initialize generator with this file
             generator = PaligemmaSampleGenerator(
                 image_info=img_info_path,
-                enable_augmentation=self.enable_augmentation
+                enable_augmentation=self.enable_augmentation,
+                max_structures_for_multistructure_tasks=config['data']['max_structures_for_multistructure_tasks']
             )
                         
             # Get available structures from the NPZ file

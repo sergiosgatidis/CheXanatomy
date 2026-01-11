@@ -11,11 +11,14 @@ data:
   training_data_path: "/mnt/SSD2/CT-RATE/processed/CT_RATE_training_data"
   train_val_split: 0.01  # 1% for validation
   enable_augmentation: true
+  max_structures_for_multistructure_tasks: 5  # Maximum structures for multi-structure tasks
   
-  # Available task types for training
+  # Available task types for training (comment out with # to disable)
   available_tasks:
     - "detection"
-    - "segmentation" 
+    - "segmentation"
+    - "multi_structure_detection"      # New: detect multiple structures at once
+    - "multi_structure_segmentation"   # New: segment multiple structures at once
     - "bbox_token_identification"
     - "mask_token_identification"
     - "bbox_identification"

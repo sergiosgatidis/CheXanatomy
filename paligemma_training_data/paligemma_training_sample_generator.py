@@ -85,7 +85,7 @@ class PaligemmaSampleGenerator:
     - orientation_identification: Identify image orientation (axial/sagittal/coronal)    """
     
     def __init__(self, image_info: Union[str, Dict], enable_augmentation: bool = False,
-                 scale_range: tuple = (0.7, 1.0), background_value: float = 0.0):
+                 scale_range: tuple = (0.7, 1.0), background_value: float = 0.0, max_structures_for_multistructure_tasks: int = 5):
         """
         Initialize the sample generator.
         
@@ -98,10 +98,12 @@ class PaligemmaSampleGenerator:
                         Only used if enable_augmentation=True.
             background_value: Background fill value for augmented images.
                             Only used if enable_augmentation=True.
+            max_structures_for_multistructure_tasks: Maximum number of structures for multi-structure tasks (default: 5).
         """
         self.enable_augmentation = enable_augmentation
         self.scale_range = scale_range
         self.background_value = background_value
+        self.max_structures_for_multistructure_tasks = max_structures_for_multistructure_tasks
         
         if isinstance(image_info, str):
             self.img_info = self._load_img_info(image_info)
@@ -313,6 +315,8 @@ class PaligemmaSampleGenerator:
         task_methods = {
             "detection": self.generate_detection_sample,
             "segmentation": self.generate_segmentation_sample,
+            "multi_structure_detection": self.generate_multi_structure_detection_sample,
+            "multi_structure_segmentation": self.generate_multi_structure_segmentation_sample,
             "bbox_token_identification": self.generate_bbox_token_identification_sample,
             "mask_token_identification": self.generate_mask_token_identification_sample,
             "bbox_identification": self.generate_bbox_identification_sample,
@@ -391,6 +395,78 @@ class PaligemmaSampleGenerator:
         prefix = f"segment {structure_name}"
         suffix = f"{structure_info['segmentation_token']} {structure_name}"
         return TrainingSample(prefix=prefix, suffix=suffix, image=image, task_type="segmentation", structure=structure)
+    
+    def generate_multi_structure_detection_sample(self, structures: List[str]) -> Optional[TrainingSample]:
+        """
+        Generate a multi-structure detection sample.
+        
+        Args:
+            structures: List of structure labels to include in the multi-structure task
+            
+        Returns:
+            TrainingSample with multi-structure detection task or None
+        """
+        if len(structures) < 2:
+            return None
+            
+        img_array = np.array(self.img_info["img_array"])
+        image = self._array_to_rgb_image(img_array)
+        
+        prefix_parts = []
+        suffix_parts = []
+        
+        for structure in structures:
+            structure_name = random.choice(self.anatomic_names.get(structure, [structure.replace('_', ' ')]))
+            structure_info = self.get_structure_info(structure)
+            
+            if structure_info and 'bbox_token' in structure_info:
+                prefix_parts.append(structure_name)
+                suffix_parts.append(f"{structure_info['bbox_token']} {structure_name}")
+        
+        if not suffix_parts:
+            return None
+            
+        prefix = f"detect {' ; '.join(prefix_parts)}"
+        suffix = ' ; '.join(suffix_parts)
+        
+        return TrainingSample(prefix=prefix, suffix=suffix, image=image, 
+                            task_type="multi_structure_detection", structure=None)
+    
+    def generate_multi_structure_segmentation_sample(self, structures: List[str]) -> Optional[TrainingSample]:
+        """
+        Generate a multi-structure segmentation sample.
+        
+        Args:
+            structures: List of structure labels to include in the multi-structure task
+            
+        Returns:
+            TrainingSample with multi-structure segmentation task or None
+        """
+        if len(structures) < 2:
+            return None
+            
+        img_array = np.array(self.img_info["img_array"])
+        image = self._array_to_rgb_image(img_array)
+        
+        prefix_parts = []
+        suffix_parts = []
+        
+        for structure in structures:
+            structure_name = random.choice(self.anatomic_names.get(structure, [structure.replace('_', ' ')]))
+            structure_info = self.get_structure_info(structure)
+            
+            if structure_info and 'segmentation_token' in structure_info:
+                prefix_parts.append(structure_name)
+                suffix_parts.append(f"{structure_info['segmentation_token']} {structure_name}")
+        
+        if not suffix_parts:
+            return None
+            
+        prefix = f"segment {' ; '.join(prefix_parts)}"
+        suffix = ' ; '.join(suffix_parts)
+        
+        return TrainingSample(prefix=prefix, suffix=suffix, image=image, 
+                            task_type="multi_structure_segmentation", structure=None)
     
     def generate_bbox_token_identification_sample(self, structure: str) -> Optional[TrainingSample]:
         """
