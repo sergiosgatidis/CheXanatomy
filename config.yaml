@@ -4,11 +4,11 @@
 # Model Configuration
 model:
   model_size: 10          # Available: 3, 10, 28 (for 3b, 10b, 28b models)
-  input_image_size: 224  # Available: 224, 448, 896
+  input_image_size: 448  # Available: 224, 448, 896
   
 # Training Data
 data:
-  training_data_path: "/mnt/SSD2/CT-RATE/processed/CT_RATE_training_data"
+  training_data_path: "/home/sgatidis/data/chexanatomy/CT_RATE_training_data"
   train_val_split: 0.01  # 1% for validation
   enable_augmentation: true
   max_structures_for_multistructure_tasks: 5  # Maximum structures for multi-structure tasks
@@ -17,20 +17,21 @@ data:
   available_tasks:
     - "detection"
     - "segmentation"
-    - "multi_structure_detection"      # New: detect multiple structures at once
-    - "multi_structure_segmentation"   # New: segment multiple structures at once
-    - "bbox_token_identification"
-    - "mask_token_identification"
-    - "bbox_identification"
-    - "mask_identification"
+    #- "multi_structure_detection"      # New: detect multiple structures at once
+    #- "multi_structure_segmentation"   # New: segment multiple structures at once
+    #- "bbox_token_identification"
+    #- "mask_token_identification"
+    #- "bbox_identification"
+    #- "mask_identification"
     - "orientation_identification"
 
 # Training Hyperparameters
 training:
   num_train_epochs: 20
-  per_device_train_batch_size: 4
-  per_device_eval_batch_size: 4
-  gradient_accumulation_steps: 4
+  per_device_train_batch_size: 3
+  per_device_eval_batch_size: 3
+  gradient_accumulation_steps: 1
+  auto_find_batch_size: true  # Automatically find the largest batch size that fits in memory
   learning_rate: 5.0e-5
   weight_decay: 0.01
   adam_beta2: 0.999
@@ -42,13 +43,13 @@ logging:
   save_steps: 10000
   eval_steps: 10000
   save_total_limit: 3
-  run_name: "chexanatomy_paligemma_testrun_10B"
+  run_name: "chexanatomy_paligemma_testrun_10B_448_H100_single_structure_det_seg"  # Unique name for this training run
 
 # Optimization Strategy
 optimization:
   use_lora: true
   use_qlora: false
-  freeze_vision: true
+  freeze_vision: false
   lora_r: 16
   lora_target_modules:
     - "q_proj"
@@ -61,7 +62,7 @@ optimization:
 
 # Paths
 paths:
-  model_output_dir: "/mnt/SSD2/Paligemma_models"
+  model_output_dir: "/home/sgatidis/data/chexanatomy/models"
   vqvae_model_path: "./models/vae-oid.npz"
 
 # Wandb Configuration
