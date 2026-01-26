@@ -28,6 +28,7 @@ data:
 # Training Hyperparameters
 training:
   num_train_epochs: 30
+  max_steps: -1          # -1 = ignore, use num_train_epochs
   per_device_train_batch_size: 4
   per_device_eval_batch_size: 4
   gradient_accumulation_steps: 1
