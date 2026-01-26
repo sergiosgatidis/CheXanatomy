@@ -8,7 +8,7 @@ model:
   
 # Training Data
 data:
-  training_data_path: "/home/sgatidis/data/chexanatomy/CT_RATE_training_data"
+  training_data_path: "/projects/m000132/CTRATE_Paligemma_Training/CT_RATE_training_data"
   train_val_split: 0.01  # 1% for validation
   enable_augmentation: true
   max_structures_for_multistructure_tasks: 5  # Maximum structures for multi-structure tasks
@@ -27,9 +27,9 @@ data:
 
 # Training Hyperparameters
 training:
-  num_train_epochs: 20
-  per_device_train_batch_size: 3
-  per_device_eval_batch_size: 3
+  num_train_epochs: 30
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
   gradient_accumulation_steps: 1
   auto_find_batch_size: true  # Automatically find the largest batch size that fits in memory
   learning_rate: 5.0e-5
@@ -42,14 +42,15 @@ logging:
   logging_steps: 100
   save_steps: 10000
   eval_steps: 10000
-  save_total_limit: 3
-  run_name: "chexanatomy_paligemma_testrun_10B_448_H100_single_structure_det_seg"  # Unique name for this training run
+  save_total_limit: 1
+  run_name: "chexanatomy_paligemma_testrun_10B_448_Marlowe"  # Unique name for this training run
 
 # Optimization Strategy
 optimization:
   use_lora: true
   use_qlora: false
-  freeze_vision: false
+  freeze_vision_tower: true
+  freeze_mm_projector: false
   lora_r: 16
   lora_target_modules:
     - "q_proj"
@@ -62,7 +63,7 @@ optimization:
 
 # Paths
 paths:
-  model_output_dir: "/home/sgatidis/data/chexanatomy/models"
+  model_output_dir: "/projects/m000132/CTRATE_Paligemma_Training/models/"
   vqvae_model_path: "./models/vae-oid.npz"
 
 # Wandb Configuration
