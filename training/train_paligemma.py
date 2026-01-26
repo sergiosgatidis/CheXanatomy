@@ -7,12 +7,6 @@ on chest X-ray anatomy data using our PaligemmaSampleGenerator.
 Usage:
     python training/train_paligemma.py [--config path/to/config.yaml]
 
-Requirements:
-    - transformers
-    - torch
-    - peft (for LoRA)
-    - wandb (optional, for logging)
-    - pyyaml
 """
 
 import sys
@@ -51,13 +45,26 @@ from torch.utils.data import Dataset
 from transformers import PaliGemmaForConditionalGeneration, PaliGemmaProcessor, BitsAndBytesConfig, Trainer, TrainingArguments
 from peft import get_peft_model, LoraConfig
 
-# Optional wandb import
-try:
-    import wandb
-    wandb_available = True
-except ImportError:
-    wandb_available = False
-    print("wandb not available. Install with: pip install wandb")
+# wandb import (to make it work in a multi GPU setting)
+
+# --- Explicit W&B init (rank0 only) ---
+def is_rank0():
+    return int(os.environ.get("RANK", os.environ.get("SLURM_PROCID", "0"))) == 0
+
+# --- DDP safety: disable wandb on non-rank0 ---
+if not is_rank0():
+    os.environ["WANDB_MODE"] = "disabled"
+
+import wandb
+
+if config.get("wandb", {}).get("project") and is_rank0():
+    wandb.init(
+        project=config["wandb"]["project"],
+        entity=config.get("wandb", {}).get("entity"),  # optional
+        name=config.get("logging", {}).get("run_name"),
+        config=config,
+    )
+
 
 # Construct model_id from modular parameters
 model_id = f"google/paligemma2-{config['model']['model_size']}b-pt-{config['model']['input_image_size']}"
@@ -175,45 +182,6 @@ class CheXanatomyDataset(Dataset):
 
 print("Loading model and processor...")
 
-# Initialize wandb if available and configured
-if wandb_available and config.get('wandb', {}).get('project'):
-    wandb.init(
-        # Set the wandb entity where your project will be logged
-        entity=config['wandb']['entity'],
-        # Set the wandb project where this run will be logged
-        project=config['wandb']['project'],
-        # Track hyperparameters and run metadata
-        config={
-            "model_id": model_id,
-            "model_size": config['model']['model_size'],
-            "input_image_size": config['model']['input_image_size'],
-            "learning_rate": config['training']['learning_rate'],
-            "num_epochs": config['training']['num_train_epochs'],
-            "batch_size": config['training']['per_device_train_batch_size'],
-            "auto_find_batch_size": config['training']['auto_find_batch_size'],
-            "gradient_accumulation_steps": config['training']['gradient_accumulation_steps'],
-            "warmup_steps": config['training']['warmup_steps'],
-            "weight_decay": config['training']['weight_decay'],
-            "use_lora": config['optimization']['use_lora'],
-            "use_qlora": config['optimization']['use_qlora'],
-            "lora_r": config['optimization']['lora_r'],
-            "freeze_vision": config['optimization']['freeze_vision'],
-            "dataset": "CT-RATE",
-            "architecture": "PaliGemmaV2",
-            "training_data_path": config['data']['training_data_path'],
-            "enable_augmentation": config['data']['enable_augmentation'],
-            "available_tasks": config['data']['available_tasks'],
-        },
-        tags=config['wandb'].get('tags', []),
-        notes=config['wandb'].get('notes', ''),
-        name=config['logging']['run_name'],  # Set run name
-        save_code=config['wandb'].get('save_code', True)  # Save code for reproducibility
-    )
-    print("✅ Wandb initialized successfully")
-    print(f"🌐 Track progress: https://wandb.ai/{config['wandb']['entity']}/{config['wandb']['project']}")
-else:
-    print("⚠️ Wandb not configured - training will proceed without logging")
-
 # Load processor
 processor = PaliGemmaProcessor.from_pretrained(model_id)
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -251,13 +219,16 @@ if config['optimization']['use_lora'] or config['optimization']['use_qlora']:
     print("LoRA configuration applied:")
     model.print_trainable_parameters()
 
-# Freeze vision tower if specified
-if config['optimization']['freeze_vision'] and not (config['optimization']['use_lora'] or config['optimization']['use_qlora']):
-    for param in model.vision_tower.parameters():
-        param.requires_grad = False
-    for param in model.multi_modal_projector.parameters():
-        param.requires_grad = False
+# Freeze vision tower / multimodal projector if specified
+if config["optimization"].get("freeze_vision_tower", False):
+    for p in model.vision_tower.parameters():
+        p.requires_grad = False
     print("Vision tower frozen")
+
+if config["optimization"].get("freeze_mm_projector", False):
+    for p in model.multi_modal_projector.parameters():
+        p.requires_grad = False
+    print("Multimodal projector frozen")
 
 # =============================================================================
 # DATA COLLATION
@@ -308,6 +279,7 @@ training_args = TrainingArguments(
     adam_beta2=config['training']['adam_beta2'],
     logging_steps=config['logging']['logging_steps'],
     optim="adamw_torch",
+    ddp_find_unused_parameters=False,
     save_strategy="steps",
     save_steps=config['logging']['save_steps'],
     do_eval=True,
@@ -319,7 +291,10 @@ training_args = TrainingArguments(
     dataloader_pin_memory=False,
     output_dir=config['paths']['model_output_dir'],
     run_name=config['logging']['run_name'],
-    report_to=["wandb"] if wandb_available and config.get('wandb', {}).get('project') else [],
+    report_to=["wandb"] if (config.get("wandb", {}).get("project") and is_rank0()) else [],
+    disable_tqdm=True,
+    log_level="info",
+    log_level_replica="warning",
 )
 
 # Initialize trainer
@@ -348,16 +323,21 @@ if __name__ == "__main__":
     processor.save_pretrained(final_model_path)
     
     print(f"Training completed! Model saved to: {final_model_path}")
-    
-    # Log model as wandb artifact for lineage tracking
-    if wandb_available and config.get('wandb', {}).get('project'):
+
+    # --- Log final model to W&B (rank0 only) ---
+    if is_rank0() and wandb.run is not None:
         model_artifact = wandb.Artifact(
-            name=f"paligemma2-{config['model']['model_size']}b-{config['model']['input_image_size']}", 
+            name=f"paligemma2-{config['model']['model_size']}b-{config['model']['input_image_size']}",
             type="model",
-            description=f"Fine-tuned PaliGemma2 {config['model']['model_size']}b model with {config['model']['input_image_size']} input size for chest X-ray anatomy tasks"
+            description=(
+                f"Fine-tuned PaliGemma2 {config['model']['model_size']}b "
+                f"at {config['model']['input_image_size']}px"
+            ),
         )
         model_artifact.add_dir(final_model_path)
         wandb.log_artifact(model_artifact)
         print(f"✅ Model logged to wandb as artifact: {model_artifact.name}")
-        
+
         wandb.finish()
+    
+
