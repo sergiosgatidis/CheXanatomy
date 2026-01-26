@@ -268,6 +268,7 @@ os.makedirs(config['paths']['model_output_dir'], exist_ok=True)
 # Training arguments
 training_args = TrainingArguments(
     num_train_epochs=config['training']['num_train_epochs'],
+    max_steps=config["training"].get("max_steps", -1),
     remove_unused_columns=False,
     per_device_train_batch_size=config['training']['per_device_train_batch_size'],
     per_device_eval_batch_size=config['training']['per_device_eval_batch_size'],
