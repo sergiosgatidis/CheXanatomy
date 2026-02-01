@@ -7,6 +7,12 @@ on chest X-ray anatomy data using our PaligemmaSampleGenerator.
 Usage:
     python training/train_paligemma.py [--config path/to/config.yaml]
 
+Requirements:
+    - transformers
+    - torch
+    - peft (for LoRA)
+    - wandb (optional, for logging)
+    - pyyaml
 """
 
 import sys
@@ -14,6 +20,9 @@ import os
 import yaml
 import argparse
 from pathlib import Path
+import math
+import shutil
+
 
 # Add the src directory to the path so we can import our modules
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'paligemma_training_data'))
@@ -27,7 +36,7 @@ def load_config(config_path):
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Train Paligemma model on CheXanatomy data')
-parser.add_argument('--config', type=str, default='config.yaml', 
+parser.add_argument('--config', type=str, default='config.yaml',
                    help='Path to config YAML file (default: config.yaml)')
 args = parser.parse_args()
 
@@ -42,7 +51,8 @@ import torch
 import numpy as np
 import random
 from torch.utils.data import Dataset
-from transformers import PaliGemmaForConditionalGeneration, PaliGemmaProcessor, BitsAndBytesConfig, Trainer, TrainingArguments
+from transformers import PaliGemmaForConditionalGeneration, PaliGemmaProcessor, BitsAndBytesConfig, Trainer, TrainingArguments, TrainerCallback
+from transformers.trainer_utils import get_last_checkpoint
 from peft import get_peft_model, LoraConfig
 
 # wandb import (to make it work in a multi GPU setting)
@@ -57,15 +67,43 @@ if not is_rank0():
 
 import wandb
 
-if config.get("wandb", {}).get("project") and is_rank0():
-    wandb.init(
-        project=config["wandb"]["project"],
-        entity=config.get("wandb", {}).get("entity"),  # optional
-        name=config.get("logging", {}).get("run_name"),
-        config=config,
-    )
+# =========================
+# Callbacks to save specific epochs as checkpoints
+# =========================
+class MilestoneCheckpointCallback(TrainerCallback):
+    def __init__(self, output_dir: str, milestone_epochs=(10, 20, 30, 40, 50)):
+        self.output_dir = output_dir
+        self.milestones = set(milestone_epochs)
 
+    def on_save(self, args, state, control, **kwargs):
+        if not is_rank0():
+            return control
 
+        if state.epoch is None:
+            return control
+
+        epoch_int = int(round(state.epoch))
+        if epoch_int not in self.milestones:
+            return control
+
+        ckpt_dir = os.path.join(args.output_dir, f"checkpoint-{state.global_step}")
+        if not os.path.isdir(ckpt_dir):
+            return control
+
+        pinned_dir = os.path.join(
+            self.output_dir,
+            f"milestone-epoch{epoch_int:02d}-step{state.global_step}"
+        )
+
+        if not os.path.exists(pinned_dir):
+            shutil.copytree(ckpt_dir, pinned_dir)
+            print(f"[checkpoint] pinned milestone epoch {epoch_int} -> {pinned_dir}")
+
+        return control
+
+# =========================
+# MODEL INFO
+# =========================
 # Construct model_id from modular parameters
 model_id = f"google/paligemma2-{config['model']['model_size']}b-pt-{config['model']['input_image_size']}"
 
@@ -83,13 +121,13 @@ def find_image_info_files(data_path):
     data_path = Path(data_path)
     if not data_path.exists():
         raise FileNotFoundError(f"Training data path does not exist: {data_path}")
-    
+
     # Look for .npz files
     npz_files = list(data_path.glob("**/*.npz"))
-    
+
     if not npz_files:
         raise FileNotFoundError(f"No .npz training files found in {data_path}")
-    
+
     print(f"Found {len(npz_files)} .npz training files")
     return [str(f) for f in npz_files]
 
@@ -113,35 +151,35 @@ class CheXanatomyDataset(Dataset):
     """
     Dataset class that dynamically generates training samples using PaligemmaSampleGenerator
     """
-    
+
     def __init__(self, file_paths, enable_augmentation=True):
         self.file_paths = file_paths
         self.enable_augmentation = enable_augmentation
-        
+
     def __len__(self):
         return len(self.file_paths)
-    
+
     def __getitem__(self, idx):
         try:
             # Get the image info file path
             img_info_path = self.file_paths[idx]
-            
+
             # Initialize generator with this file
             generator = PaligemmaSampleGenerator(
                 image_info=img_info_path,
                 enable_augmentation=self.enable_augmentation,
                 max_structures_for_multistructure_tasks=config['data']['max_structures_for_multistructure_tasks']
             )
-                        
+
             # Get available structures from the NPZ file
             data = np.load(img_info_path, allow_pickle=True)
             img_info = {
                 "img_array": data["img_array"],
                 **data["metadata"].item()
             }
-            
+
             structures = list(img_info.get("structure_info", {}).keys())
-            
+
             # Exclude specific structures that are not useful for training
             excluded_structures = ['torso_fat', 'subcutaneous_fat', 'intervertebral_discs']
             structures = [s for s in structures if s not in excluded_structures]
@@ -267,11 +305,17 @@ os.makedirs(config['paths']['model_output_dir'], exist_ok=True)
 
 # Training arguments
 training_args = TrainingArguments(
-    num_train_epochs=config['training']['num_train_epochs'],
+    num_train_epochs=config["training"]["num_train_epochs"],
     max_steps=config["training"].get("max_steps", -1),
+    save_strategy="epoch",
+
+    save_total_limit=config["logging"].get("save_total_limit", 2),
+    do_eval=False,
+
     remove_unused_columns=False,
+
     per_device_train_batch_size=config['training']['per_device_train_batch_size'],
-    per_device_eval_batch_size=config['training']['per_device_eval_batch_size'],
+
     gradient_accumulation_steps=config['training']['gradient_accumulation_steps'],
     auto_find_batch_size=config['training']['auto_find_batch_size'],
     warmup_steps=config['training']['warmup_steps'],
@@ -281,13 +325,7 @@ training_args = TrainingArguments(
     logging_steps=config['logging']['logging_steps'],
     optim="adamw_torch",
     ddp_find_unused_parameters=False,
-    save_strategy="steps",
-    save_steps=config['logging']['save_steps'],
-    do_eval=True,
-    eval_strategy="steps",
-    eval_steps=config['logging']['eval_steps'],
     push_to_hub=False,
-    save_total_limit=config['logging']['save_total_limit'],
     bf16=True,
     dataloader_pin_memory=False,
     output_dir=config['paths']['model_output_dir'],
@@ -304,7 +342,13 @@ trainer = Trainer(
     train_dataset=train_ds,
     eval_dataset=val_ds,
     data_collator=collate_fn,
-    args=training_args
+    args=training_args,
+    callbacks=[
+        MilestoneCheckpointCallback(
+            output_dir=training_args.output_dir,
+            milestone_epochs=(10, 20, 30, 40, 50),
+        )
+    ],
 )
 
 # =============================================================================
@@ -313,32 +357,34 @@ trainer = Trainer(
 
 if __name__ == "__main__":
     print("Starting training...")
-    print(f"Total training steps: {len(train_ds) // (config['training']['per_device_train_batch_size'] * config['training']['gradient_accumulation_steps']) * config['training']['num_train_epochs']}")
-    
-    # Start training
-    trainer.train()
-    
-    # Save final model
-    final_model_path = os.path.join(config['paths']['model_output_dir'], config['logging']['run_name'])
-    trainer.save_model(final_model_path)
-    processor.save_pretrained(final_model_path)
-    
-    print(f"Training completed! Model saved to: {final_model_path}")
 
-    # --- Log final model to W&B (rank0 only) ---
-    if is_rank0() and wandb.run is not None:
-        model_artifact = wandb.Artifact(
-            name=f"paligemma2-{config['model']['model_size']}b-{config['model']['input_image_size']}",
-            type="model",
-            description=(
-                f"Fine-tuned PaliGemma2 {config['model']['model_size']}b "
-                f"at {config['model']['input_image_size']}px"
-            ),
-        )
-        model_artifact.add_dir(final_model_path)
-        wandb.log_artifact(model_artifact)
-        print(f"✅ Model logged to wandb as artifact: {model_artifact.name}")
+    # Resume if possible
+    last_ckpt = get_last_checkpoint(training_args.output_dir) if os.path.isdir(training_args.output_dir) else None
+    if last_ckpt is not None:
+        print(f"🔄 Resuming from checkpoint: {last_ckpt}")
+        trainer.train(resume_from_checkpoint=last_ckpt)
+    else:
+        print("🚀 No checkpoint found, starting from scratch")
+        trainer.train()
 
-        wandb.finish()
-    
+    # Save final model (rank0 only)
+    if is_rank0():
+        final_model_path = os.path.join(training_args.output_dir, "final")
+        trainer.save_model(final_model_path)
+        processor.save_pretrained(final_model_path)
+        print(f"Training completed! Model saved to: {final_model_path}")
+
+        # Log final model to W&B (rank0 only)
+        if wandb.run is not None:
+            model_artifact = wandb.Artifact(
+                name=f"paligemma2-{config['model']['model_size']}b-{config['model']['input_image_size']}",
+                type="model",
+                description=(
+                    f"Fine-tuned PaliGemma2 {config['model']['model_size']}b "
+                    f"at {config['model']['input_image_size']}px"
+                ),
+            )
+            model_artifact.add_dir(final_model_path)
+            wandb.log_artifact(model_artifact)
+            print(f"✅ Model logged to wandb as artifact: {model_artifact.name}") 
 
