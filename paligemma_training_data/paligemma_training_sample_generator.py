@@ -206,52 +206,296 @@ class PaligemmaSampleGenerator:
             raise ValueError(f"Unsupported file format: {file_extension}. Only .npz files are supported.")
     
     def _get_anatomic_names(self) -> Dict[str, List[str]]:
-        """Get anatomical name variations for structures"""
         return {
-            'bones': ["Bones", "Skeleton", "Osseous Structures"],
-            'sacrum': ["Sacrum", "Sacral Bone", "Os Sacrum"],
-            'skull': ["Skull", "Cranium"],
-            'sternum': ["Sternum", "Breastbone"],
-            'lung_right': ["Right Lung", "Pulmo Dextra"],
-            'lung_left': ["Left Lung", "Pulmo Sinistra"],
-            'lung_lower_lobe_right': ["Right Lower Lung Lobe", "Right Lower Lobe", "RLL"],
-            'lung_middle_lobe_right': ["Right Middle Lung Lobe", "Right Middle Lobe", "RML"],
-            'lung_upper_lobe_right': ["Right Upper Lung Lobe", "Right Upper Lobe", "RUL"],
-            'lung_lower_lobe_left': ["Left Lower Lung Lobe", "Left Lower Lobe", "LLL"],
-            'lung_upper_lobe_left': ["Left Upper Lung Lobe", "Left Upper Lobe", "LUL"],
-            'vertebrae_body': ["Spine", "Vertebral Column"],
-            'heart': ["Heart", "Cor"],
-            'pulmonary_artery': ["Pulmonary Artery", "Pulmonary Trunk"],
-            'lung_trachea_bronchia': ["Tracheobronchial tree"],
-            'trachea': ["Trachea", "Windpipe"],
-            'bronchia': ["Bronchi", "Bronchial tubes"],
-            'aorta': ["Aorta"],
-            'body': ["Skeleton", "Bones"],
-            'brachiocephalic_vein_left': ["Left Brachiocephalic Vein", "Left Innominate Vein"],
-            'brachiocephalic_vein_right': ["Right Brachiocephalic Vein", "Right Innominate Vein"],
-            'clavicula_left': ["Left Clavicle", "Left Collarbone"],
-            'clavicula_right': ["Right Clavicle", "Right Collarbone"],
-            'colon': ["Colon", "Large Bowel", "Large Intestine"],
-            'costal_cartilages': ["Costal Cartilages", "Rib Cartilages"],
-            'esophagus': ["Esophagus", "Oesophagus", "Food Pipe"],
-            'humerus_left': ["Left Humerus", "Left Upper Arm Bone"],
-            'humerus_right': ["Right Humerus", "Right Upper Arm Bone"],
-            'inferior_vena_cava': ["Inferior Vena Cava", "IVC"],
-            'intervertebral_discs': ["Intervertebral Discs", "Spinal discs"],
-            'liver': ["Liver", "Hepar"],
-            'spleen': ["Spleen", "Lien", "Splenic Organ"],
-            'pulmonary_vein': ["Pulmonary Vein", "Pulmonary Veins"],
-            'heart_atrium_left': ["Left Atrial Appendage", "Left Atrial Auricle"],
-            'heart_atrium_right': ["Right Atrium"],
-            'heart_ventricle_left': ["Left Ventricle"],
-            'heart_ventricle_right': ["Right Ventricle"],
-            'lung_vessels': ["Pulmonary vessels"],
-            'scapula_left': ["Left Scapula", "Left Shoulder Blade"],
-            'scapula_right': ["Right Scapula", "Right Shoulder Blade"],
-            'stomach': ["Stomach", "Gaster"],
-            'subcutaneous_fat': ["Subcutaneous Fat"],
-            'superior_vena_cava': ["Superior Vena Cava", "SVC"],
-            'torso_fat': ["Torso Fat", "Body Fat", "Visceral Fat"],
+    
+            # --------------------
+            # General / Skeleton
+            # --------------------
+            'bones': [
+                "Bones", "Skeleton", "Osseous Structures",
+                "Bony structures", "Bony anatomy"
+            ],
+            'body': [
+                "Skeleton", "Bones", "Bony anatomy"
+            ],
+    
+            # --------------------
+            # Skull & Spine
+            # --------------------
+            'skull': [
+                "Skull", "Cranium", "Calvarium"
+            ],
+            'vertebrae_body': [
+                "Spine", "Vertebral Column", "Spinal column"
+            ],
+            'intervertebral_discs': [
+                "Intervertebral Discs", "Spinal discs", "Disc spaces"
+            ],
+            'sacrum': [
+                "Sacrum", "Sacral Bone", "Os Sacrum", "Sacral spine"
+            ],
+    
+            # --------------------
+            # Vertebral Bodies
+            # --------------------
+            'vertebral_body_C1': [
+                "Cervical Vertebra 1", "C1", "Atlas",
+                "First cervical vertebra", "First cervical vertebral body"
+            ],
+            'vertebral_body_C2': [
+                "Cervical Vertebra 2", "C2", "Axis",
+                "Second cervical vertebra", "Second cervical vertebral body"
+            ],
+            'vertebral_body_C3': [
+                "Cervical Vertebra 3", "C3",
+                "Third cervical vertebra", "Third cervical vertebral body"
+            ],
+            'vertebral_body_C4': [
+                "Cervical Vertebra 4", "C4",
+                "Fourth cervical vertebra", "Fourth cervical vertebral body"
+            ],
+            'vertebral_body_C5': [
+                "Cervical Vertebra 5", "C5",
+                "Fifth cervical vertebra", "Fifth cervical vertebral body"
+            ],
+            'vertebral_body_C6': [
+                "Cervical Vertebra 6", "C6",
+                "Sixth cervical vertebra", "Sixth cervical vertebral body"
+            ],
+            'vertebral_body_C7': [
+                "Cervical Vertebra 7", "C7",
+                "Seventh cervical vertebra", "Seventh cervical vertebral body"
+            ],
+    
+            'vertebral_body_T1': [
+                "Thoracic Vertebra 1", "T1",
+                "First thoracic vertebra", "First thoracic vertebral body"
+            ],
+            'vertebral_body_T2': [
+                "Thoracic Vertebra 2", "T2",
+                "Second thoracic vertebra", "Second thoracic vertebral body"
+            ],
+            'vertebral_body_T3': [
+                "Thoracic Vertebra 3", "T3",
+                "Third thoracic vertebra", "Third thoracic vertebral body"
+            ],
+            'vertebral_body_T4': [
+                "Thoracic Vertebra 4", "T4",
+                "Fourth thoracic vertebra", "Fourth thoracic vertebral body"
+            ],
+            'vertebral_body_T5': [
+                "Thoracic Vertebra 5", "T5",
+                "Fifth thoracic vertebra", "Fifth thoracic vertebral body"
+            ],
+            'vertebral_body_T6': [
+                "Thoracic Vertebra 6", "T6",
+                "Sixth thoracic vertebra", "Sixth thoracic vertebral body"
+            ],
+            'vertebral_body_T7': [
+                "Thoracic Vertebra 7", "T7",
+                "Seventh thoracic vertebra", "Seventh thoracic vertebral body"
+            ],
+            'vertebral_body_T8': [
+                "Thoracic Vertebra 8", "T8",
+                "Eighth thoracic vertebra", "Eighth thoracic vertebral body"
+            ],
+            'vertebral_body_T9': [
+                "Thoracic Vertebra 9", "T9",
+                "Ninth thoracic vertebra", "Ninth thoracic vertebral body"
+            ],
+            'vertebral_body_T10': [
+                "Thoracic Vertebra 10", "T10",
+                "Tenth thoracic vertebra", "Tenth thoracic vertebral body"
+            ],
+            'vertebral_body_T11': [
+                "Thoracic Vertebra 11", "T11",
+                "Eleventh thoracic vertebra", "Eleventh thoracic vertebral body"
+            ],
+            'vertebral_body_T12': [
+                "Thoracic Vertebra 12", "T12",
+                "Twelfth thoracic vertebra", "Twelfth thoracic vertebral body"
+            ],
+    
+            'vertebral_body_L1': [
+                "Lumbar Vertebra 1", "L1",
+                "First lumbar vertebra", "First lumbar vertebral body"
+            ],
+            'vertebral_body_L2': [
+                "Lumbar Vertebra 2", "L2",
+                "Second lumbar vertebra", "Second lumbar vertebral body"
+            ],
+            'vertebral_body_L3': [
+                "Lumbar Vertebra 3", "L3",
+                "Third lumbar vertebra", "Third lumbar vertebral body"
+            ],
+            'vertebral_body_L4': [
+                "Lumbar Vertebra 4", "L4",
+                "Fourth lumbar vertebra", "Fourth lumbar vertebral body"
+            ],
+            'vertebral_body_L5': [
+                "Lumbar Vertebra 5", "L5",
+                "Fifth lumbar vertebra", "Fifth lumbar vertebral body"
+            ],
+    
+            'vertebral_body_S1': [
+                "Sacral Vertebra 1", "S1",
+                "First sacral vertebra", "First sacral vertebral body"
+            ],
+    
+            # --------------------
+            # Lungs & Airways
+            # --------------------
+            'lung_right': [
+                "Right Lung"
+            ],
+            'lung_left': [
+                "Left Lung"
+            ],
+            'lung_upper_lobe_right': [
+                "Right Upper Lung Lobe", "Right Upper Lobe", "RUL"
+            ],
+            'lung_middle_lobe_right': [
+                "Right Middle Lung Lobe", "Right Middle Lobe", "RML"
+            ],
+            'lung_lower_lobe_right': [
+                "Right Lower Lung Lobe", "Right Lower Lobe", "RLL"
+            ],
+            'lung_upper_lobe_left': [
+                "Left Upper Lung Lobe", "Left Upper Lobe", "LUL"
+            ],
+            'lung_lower_lobe_left': [
+                "Left Lower Lung Lobe", "Left Lower Lobe", "LLL"
+            ],
+            'lung_vessels': [
+                "Pulmonary vessels", "Pulmonary vasculature"
+            ],
+            'trachea': [
+                "Trachea", "Windpipe", "Tracheal lumen"
+            ],
+            'bronchia': [
+                "Bronchi", "Bronchial tubes", "Bronchial tree"
+            ],
+            'lung_trachea_bronchia': [
+                "Tracheobronchial tree", "Central airways"
+            ],
+    
+            # --------------------
+            # Heart & Vessels
+            # --------------------
+            'heart': [
+                "Heart", "Cor", "Cardiac silhouette"
+            ],
+            'heart_atrium_left': [
+                "Left Atrium", "Left atrial chamber"
+            ],
+            'heart_atrium_right': [
+                "Right Atrium", "Right atrial chamber"
+            ],
+            'heart_ventricle_left': [
+                "Left Ventricle", "Left ventricular chamber"
+            ],
+            'heart_ventricle_right': [
+                "Right Ventricle", "Right ventricular chamber"
+            ],
+            'aorta': [
+                "Aorta", "Ascending aorta",
+                "Descending aorta", "Thoracic aorta"
+            ],
+            'pulmonary_artery': [
+                "Pulmonary Artery", "Pulmonary Trunk",
+                "Main pulmonary artery"
+            ],
+            'pulmonary_vein': [
+                "Pulmonary Vein", "Pulmonary Veins"
+            ],
+            'superior_vena_cava': [
+                "Superior Vena Cava", "SVC", "V. cava superior"
+            ],
+            'inferior_vena_cava': [
+                "Inferior Vena Cava", "IVC", "V. cava inferior"
+            ],
+            'brachiocephalic_vein_left': [
+                "Left Brachiocephalic Vein", "Left Innominate Vein"
+            ],
+            'brachiocephalic_vein_right': [
+                "Right Brachiocephalic Vein", "Right Innominate Vein"
+            ],
+    
+            # --------------------
+            # GI Organs
+            # --------------------
+            'esophagus': [
+                "Esophagus", "Oesophagus",
+                "Food Pipe", "Esophageal lumen"
+            ],
+            'stomach': [
+                "Stomach", "Gaster", "Gastric lumen"
+            ],
+            'colon': [
+                "Colon", "Large Bowel",
+                "Large Intestine", "Colonic lumen"
+            ],
+            'liver': [
+                "Liver", "Hepar", "Hepatic parenchyma"
+            ],
+            'spleen': [
+                "Spleen", "Lien", "Splenic parenchyma"
+            ],
+    
+            # --------------------
+            # Musculoskeletal
+            # --------------------
+            'sternum': [
+                "Sternum", "Breastbone", "Sternal bone"
+            ],
+            'scapula_left': [
+                "Left Scapula", "Left Shoulder Blade"
+            ],
+            'scapula_right': [
+                "Right Scapula", "Right Shoulder Blade"
+            ],
+            'clavicula_left': [
+                "Left Clavicle", "Left Collarbone"
+            ],
+            'clavicula_right': [
+                "Right Clavicle", "Right Collarbone"
+            ],
+            'humerus_left': [
+                "Left Humerus", "Left Upper Arm Bone"
+            ],
+            'humerus_right': [
+                "Right Humerus", "Right Upper Arm Bone"
+            ],
+    
+            # --------------------
+            # Ribs
+            # --------------------
+            **{
+                f"rib_left_{i}": [
+                    f"Left {i} Rib",
+                    f"Left {['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth','Ninth','Tenth','Eleventh','Twelfth'][i-1]} Rib"
+                ]
+                for i in range(1, 13)
+            },
+            **{
+                f"rib_right_{i}": [
+                    f"Right {i} Rib",
+                    f"Right {['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth','Ninth','Tenth','Eleventh','Twelfth'][i-1]} Rib"
+                ]
+                for i in range(1, 13)
+            },
+    
+            # --------------------
+            # Fat Compartments
+            # --------------------
+            'subcutaneous_fat': [
+                "Subcutaneous Fat",
+                "Subcutaneous adipose tissue", "SAT"
+            ],
+            'torso_fat': [
+                "Torso Fat", "Body Fat",
+                "Visceral Fat", "Visceral adipose tissue", "VAT"
+            ],
         }
     
     def get_structure_info(self, structure: str) -> Optional[dict]:
