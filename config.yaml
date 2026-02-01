@@ -9,7 +9,7 @@ model:
 # Training Data
 data:
   training_data_path: "/projects/m000132/CTRATE_Paligemma_Training/CT_RATE_training_data"
-  train_val_split: 0.01  # 1% for validation
+  train_val_split: 0.001  # 1% for validation
   enable_augmentation: true
   max_structures_for_multistructure_tasks: 5  # Maximum structures for multi-structure tasks
   
@@ -27,7 +27,7 @@ data:
 
 # Training Hyperparameters
 training:
-  num_train_epochs: 30
+  num_train_epochs: 50
   max_steps: -1          # -1 = ignore, use num_train_epochs
   per_device_train_batch_size: 4
   per_device_eval_batch_size: 4
@@ -41,9 +41,9 @@ training:
 # Logging and Saving
 logging:
   logging_steps: 100
-  save_steps: 10000
-  eval_steps: 10000
-  save_total_limit: 1
+ # save_steps: 10000
+ # eval_steps: 10000
+  save_total_limit: 50
   run_name: "chexanatomy_paligemma_testrun_10B_448_Marlowe"  # Unique name for this training run
 
 # Optimization Strategy
