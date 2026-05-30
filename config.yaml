@@ -1,15 +1,15 @@
 # CheXanatomy Paligemma Training Configuration
-# This YAML file contains all configuration parameters for training
+# Publication-safe example config. Copy to a local file and replace placeholder paths.
 
 # Model Configuration
 model:
-  model_size: 10          # Available: 3, 10, 28 (for 3b, 10b, 28b models)
-  input_image_size: 448  # Available: 224, 448, 896
+  model_size: 3          # Available: 3, 10, 28 (for 3b, 10b, 28b models)
+  input_image_size: 224  # Available: 224, 448, 896
   
 # Training Data
 data:
-  training_data_path: "/projects/m000132/CTRATE_Paligemma_Training/CT_RATE_training_data"
-  train_val_split: 0.001  # 1% for validation
+  training_data_path: "/path/to/CT_RATE_training_data"
+  train_val_split: 0.01  # 1% for validation
   enable_augmentation: true
   max_structures_for_multistructure_tasks: 5  # Maximum structures for multi-structure tasks
   
@@ -29,8 +29,8 @@ data:
 training:
   num_train_epochs: 50
   max_steps: -1          # -1 = ignore, use num_train_epochs
-  per_device_train_batch_size: 4
-  per_device_eval_batch_size: 4
+  per_device_train_batch_size: 24
+  per_device_eval_batch_size: 24
   gradient_accumulation_steps: 1
   auto_find_batch_size: true  # Automatically find the largest batch size that fits in memory
   learning_rate: 5.0e-5
@@ -43,8 +43,8 @@ logging:
   logging_steps: 100
  # save_steps: 10000
  # eval_steps: 10000
-  save_total_limit: 50
-  run_name: "chexanatomy_paligemma_testrun_10B_448_Marlowe"  # Unique name for this training run
+  save_total_limit: 5
+  run_name: "chexanatomy_paligemma_run"
 
 # Optimization Strategy
 optimization:
@@ -64,22 +64,22 @@ optimization:
 
 # Paths
 paths:
-  model_output_dir: "/projects/m000132/CTRATE_Paligemma_Training/models/"
+  model_output_dir: "/path/to/output_models"
   vqvae_model_path: "./models/vae-oid.npz"
 
 # Wandb Configuration
 wandb:
-  project: "cheXanatomy"
-  entity: "sergiosgatidis"
+  project: ""
+  entity: ""
   tags: 
     - "paligemma"
     - "chest-xray"
     - "anatomy"
     - "vision-language"
     - "medical-ai"
-  notes: "Paligemma fine-tuning on chest X-ray anatomy detection and segmentation using CT-RATE dataset"
+  notes: ""
   
   # Logging configuration
-  log_model: true          # Save model checkpoints to wandb
+  log_model: false         # Save model checkpoints to wandb
   log_freq: 50            # Log metrics every N steps
-  save_code: true         # Save training script to wandb
+  save_code: false        # Save training script to wandb

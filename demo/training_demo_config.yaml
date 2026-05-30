@@ -1,0 +1,49 @@
+model:
+  model_size: 3
+  input_image_size: 224
+data:
+  training_data_path: ./demo/training_demo_npz
+  train_val_split: 0.5
+  enable_augmentation: false
+  max_structures_for_multistructure_tasks: 2
+  available_tasks:
+  - detection
+  - orientation_identification
+training:
+  num_train_epochs: 1
+  max_steps: 3
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 1
+  auto_find_batch_size: false
+  learning_rate: 5.0e-05
+  weight_decay: 0.01
+  adam_beta2: 0.999
+  warmup_steps: 0
+logging:
+  logging_steps: 1
+  save_total_limit: 1
+  run_name: chexanatomy_demo_training
+optimization:
+  use_lora: true
+  use_qlora: false
+  freeze_vision_tower: true
+  freeze_mm_projector: false
+  lora_r: 8
+  lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+paths:
+  model_output_dir: ./demo/training_demo_runs
+  vqvae_model_path: ./models/vae-oid.npz
+wandb:
+  project: ''
+  entity: ''
+  tags:
+  - demo
+  notes: Short demo run
+  log_model: false
+  log_freq: 1
+  save_code: false

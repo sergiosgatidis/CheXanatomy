@@ -32,10 +32,9 @@ PyYAML>=6.0
 imageio>=2.15.0
 h5py>=3.6.0
 
-# Development & Testing (Optional)
+# Development (Optional)
 jupyter>=1.0.0
 ipywidgets>=7.6.0
-pytest>=6.2.0
 
 # GPU Acceleration (Optional - for CUDA support)
 # Uncomment if using GPU acceleration

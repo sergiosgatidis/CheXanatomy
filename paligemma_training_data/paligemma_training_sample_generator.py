@@ -39,7 +39,6 @@ for sample in training_loop:
 RELATIONSHIP TO OTHER SCRIPTS:
 ------------------------------
 - scripts/paligemma_training_generator.py: CLI interface using this core library
-- examples/task_examples.py: Demonstration script showing usage examples
 - This module: Core library containing the generator class implementation
 
 Based on original task_definitions.py - simplified and pipeline-focused.

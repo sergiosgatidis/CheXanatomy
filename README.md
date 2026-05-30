@@ -7,11 +7,10 @@ A comprehensive training data generation pipeline for chest X-ray analysis using
 ```
 cheXanatomy/
 ├── README.md                           # This file
+├── LICENSE                             # MIT license
 ├── requirements.txt                    # Python dependencies
-├── config.py                          # Configuration settings
-├── config.yaml                       # YAML configuration
-├── sweep_config.yaml                 # Hyperparameter sweep configuration
-├── setup.py                          # Package installation
+├── config_public.yaml                # Publication-safe example configuration
+├── pyproject.toml                    # Package/build configuration
 │
 ├── training_file_generation/          # NPZ data processing & batch generation
 │   ├── generate_training_files.py    # Core NPZ generation from CT data  
@@ -28,16 +27,14 @@ cheXanatomy/
 ├── training/                         # Model training orchestration
 │   └── train_paligemma.py           # Paligemma model training script
 │
-├── examples/                         # Comprehensive examples & demos
-│   ├── image_augmentation_demo.ipynb # Interactive augmentation demonstration
-│   ├── paligemma_demo.py            # Basic Paligemma usage
-│   ├── augmented_paligemma_demo.py  # Augmentation integration demo
-│   └── test_*.py                    # Task-specific test scripts
+├── demo/                             # Demo notebooks
+│   ├── data_generation_demo.ipynb   # Read CT_RATE demo data, export NPZ, inspect samples
+│   ├── training_demo.ipynb          # Prepare demo config and run a few training steps
+│   └── inference_demo.ipynb         # Load demo images and run inference
 │
 ├── models/                          # Model weights and artifacts
 │   └── vae-oid.npz                 # VQVAE model weights
-├── outputs/                         # Generated data and results
-└── old_code/                        # Legacy reference code
+└── CT_RATE_demo_data/                # Small demo dataset for notebooks and examples
 ```
 
 ## Core Training Tasks & Capabilities
@@ -83,7 +80,7 @@ The system generates **6 comprehensive task types** for robust vision-language m
 
 ```bash
 git clone https://github.com/sergiosgatidis/cheXanatomy.git
-cd cheXanatomy/cheXanatomy
+cd cheXanatomy
 pip install -e .
 ```
 
@@ -122,11 +119,7 @@ print(f"Answer: {detection_sample.suffix}")
 ### 4. Train Paligemma Model
 
 ```bash
-python training/train_paligemma.py \
-  --train_data_dir /path/to/training_data \
-  --model_output_dir /path/to/models \
-  --batch_size 32 \
-  --epochs 10
+python training/train_paligemma.py --config config_public.yaml
 ```
 
 ## Detailed Usage
@@ -141,18 +134,16 @@ python training_file_generation/generate_training_files.py \
   --output_dir outputs/
 ```
 
-#### Batch Processing with Background Jobs
+#### Batch Processing (Workstation)
 ```bash
-# Start parallel processing jobs with logging
-nohup conda run -n chextrain python training_file_generation/batch_training_object_generation.py \
-  --input_dir /mnt/SSD2/CT-RATE/processed/CT_RATE_projections_PA \
-  --output_dir /mnt/SSD2/CT-RATE/processed/CT_RATE_training_data \
-  > pa_processing.log 2>&1 &
+# Run PA and LR processing directly from one workstation shell
+python training_file_generation/batch_training_object_generation.py \
+  --input_dir /path/to/CT_RATE_projections_PA \
+  --output_dir /path/to/CT_RATE_training_data
 
-nohup conda run -n chextrain python training_file_generation/batch_training_object_generation.py \
-  --input_dir /mnt/SSD2/CT-RATE/processed/CT_RATE_projections_LR \
-  --output_dir /mnt/SSD2/CT-RATE/processed/CT_RATE_training_data \
-  > lr_processing.log 2>&1 &
+python training_file_generation/batch_training_object_generation.py \
+  --input_dir /path/to/CT_RATE_projections_LR \
+  --output_dir /path/to/CT_RATE_training_data
 ```
 
 ### Training Sample Generation
@@ -183,22 +174,16 @@ sample = generator.generate_sample('detection', 'lung')
 
 ### Interactive Development
 
-#### Explore Image Augmentation
+#### Focused Demo Notebooks
 ```bash
-# Run the comprehensive augmentation demo
-jupyter notebook examples/image_augmentation_demo.ipynb
-```
+# Data generation demo
+jupyter notebook demo/data_generation_demo.ipynb
 
-#### Test Specific Tasks
-```bash
-# Test bounding box identification
-python examples/test_bbox_identification.py
+# Training demo
+jupyter notebook demo/training_demo.ipynb
 
-# Test with augmentation
-python examples/test_bbox_identification_augmented.py
-
-# Test mask identification  
-python examples/test_mask_identification.py
+# Inference demo
+jupyter notebook demo/inference_demo.ipynb
 ```
 
 ## Data Format & Structure
@@ -273,7 +258,17 @@ TrainingSample(
 
 ## License & Citation
 
-This project is licensed under the MIT License. If you use this code in your research, please cite:
+This project is licensed under the MIT License. See the LICENSE file in the repository root.
+
+Some bundled components are derived from the Big Vision PaliGemma demo and are redistributed under Apache License 2.0:
+
+- `utils/VQVAE_encoder_utils.py`
+- `utils/VQVAE_decoder_utils.py`
+- `models/vae-oid.npz`
+
+See `LICENSES/Apache-2.0.txt` for the Apache 2.0 license text and `models/vae-oid.npz.NOTICE` for the model artifact notice and source attribution.
+
+If you use this code in your research, please cite:
 
 ```bibtex
 @software{chexanatomy2026,

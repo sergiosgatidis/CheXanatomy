@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chexanatomy"
+version = "0.2.0"
+description = "Chest X-ray Vision-Language Model Training Pipeline"
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["chest-xray", "vision-language-model", "paligemma", "medical-imaging", "deep-learning"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Scientific/Engineering :: Medical Science Apps.",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "numpy>=1.20.0",
+  "Pillow>=8.0.0",
+  "tensorflow>=2.8.0",
+  "scipy>=1.7.0",
+  "opencv-python>=4.5.0",
+  "scikit-image>=0.18.0",
+  "matplotlib>=3.5.0",
+  "seaborn>=0.11.0",
+  "transformers>=4.20.0",
+  "torch>=1.12.0",
+  "torchvision>=0.13.0",
+  "peft>=0.5.0",
+  "tf-keras>=2.13.0",
+  "jax>=0.4.0",
+  "jaxlib>=0.4.0",
+  "flax>=0.7.0",
+  "bitsandbytes>=0.37.0",
+  "pandas>=1.3.0",
+  "tqdm>=4.60.0",
+  "PyYAML>=6.0",
+  "imageio>=2.15.0",
+  "h5py>=3.6.0",
+  "wandb>=0.12.0",
+  "tensorboard>=2.8.0",
+]
+
+[[project.authors]]
+name = "Sergios Gatidis"
+
+[project.urls]
+Homepage = "https://github.com/sergiosgatidis/cheXanatomy"
+
+[project.optional-dependencies]
+dev = [
+  "jupyter>=1.0.0",
+  "ipywidgets>=7.6.0",
+]
+
+[tool.setuptools]
+packages = ["paligemma_training_data", "training_file_generation", "training", "utils"]

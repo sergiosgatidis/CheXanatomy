@@ -11,7 +11,6 @@ Requirements:
     - transformers
     - torch
     - peft (for LoRA)
-    - wandb (optional, for logging)
     - pyyaml
 """
 
@@ -21,7 +20,6 @@ import yaml
 import argparse
 from pathlib import Path
 import math
-import shutil
 
 
 # Add the src directory to the path so we can import our modules
@@ -51,55 +49,9 @@ import torch
 import numpy as np
 import random
 from torch.utils.data import Dataset
-from transformers import PaliGemmaForConditionalGeneration, PaliGemmaProcessor, BitsAndBytesConfig, Trainer, TrainingArguments, TrainerCallback
+from transformers import PaliGemmaForConditionalGeneration, PaliGemmaProcessor, BitsAndBytesConfig, Trainer, TrainingArguments
 from transformers.trainer_utils import get_last_checkpoint
 from peft import get_peft_model, LoraConfig
-
-# wandb import (to make it work in a multi GPU setting)
-
-# --- Explicit W&B init (rank0 only) ---
-def is_rank0():
-    return int(os.environ.get("RANK", os.environ.get("SLURM_PROCID", "0"))) == 0
-
-# --- DDP safety: disable wandb on non-rank0 ---
-if not is_rank0():
-    os.environ["WANDB_MODE"] = "disabled"
-
-import wandb
-
-# =========================
-# Callbacks to save specific epochs as checkpoints
-# =========================
-class MilestoneCheckpointCallback(TrainerCallback):
-    def __init__(self, output_dir: str, milestone_epochs=(10, 20, 30, 40, 50)):
-        self.output_dir = output_dir
-        self.milestones = set(milestone_epochs)
-
-    def on_save(self, args, state, control, **kwargs):
-        if not is_rank0():
-            return control
-
-        if state.epoch is None:
-            return control
-
-        epoch_int = int(round(state.epoch))
-        if epoch_int not in self.milestones:
-            return control
-
-        ckpt_dir = os.path.join(args.output_dir, f"checkpoint-{state.global_step}")
-        if not os.path.isdir(ckpt_dir):
-            return control
-
-        pinned_dir = os.path.join(
-            self.output_dir,
-            f"milestone-epoch{epoch_int:02d}-step{state.global_step}"
-        )
-
-        if not os.path.exists(pinned_dir):
-            shutil.copytree(ckpt_dir, pinned_dir)
-            print(f"[checkpoint] pinned milestone epoch {epoch_int} -> {pinned_dir}")
-
-        return control
 
 # =========================
 # MODEL INFO
@@ -204,10 +156,10 @@ class CheXanatomyDataset(Dataset):
             
             return {
                 "prefix": sample.prefix,
-                "suffix": sample.suffix, 
+                "suffix": sample.suffix,
                 "image": image,
                 "task_type": sample.task_type,
-                "structure": sample.structure
+                "structure": sample.structure,
             }
             
         except Exception as e:
@@ -330,7 +282,7 @@ training_args = TrainingArguments(
     dataloader_pin_memory=False,
     output_dir=config['paths']['model_output_dir'],
     run_name=config['logging']['run_name'],
-    report_to=["wandb"] if (config.get("wandb", {}).get("project") and is_rank0()) else [],
+    report_to=[],
     disable_tqdm=True,
     log_level="info",
     log_level_replica="warning",
@@ -343,12 +295,6 @@ trainer = Trainer(
     eval_dataset=val_ds,
     data_collator=collate_fn,
     args=training_args,
-    callbacks=[
-        MilestoneCheckpointCallback(
-            output_dir=training_args.output_dir,
-            milestone_epochs=(10, 20, 30, 40, 50),
-        )
-    ],
 )
 
 # =============================================================================
@@ -367,24 +313,8 @@ if __name__ == "__main__":
         print("🚀 No checkpoint found, starting from scratch")
         trainer.train()
 
-    # Save final model (rank0 only)
-    if is_rank0():
-        final_model_path = os.path.join(training_args.output_dir, "final")
-        trainer.save_model(final_model_path)
-        processor.save_pretrained(final_model_path)
-        print(f"Training completed! Model saved to: {final_model_path}")
-
-        # Log final model to W&B (rank0 only)
-        if wandb.run is not None:
-            model_artifact = wandb.Artifact(
-                name=f"paligemma2-{config['model']['model_size']}b-{config['model']['input_image_size']}",
-                type="model",
-                description=(
-                    f"Fine-tuned PaliGemma2 {config['model']['model_size']}b "
-                    f"at {config['model']['input_image_size']}px"
-                ),
-            )
-            model_artifact.add_dir(final_model_path)
-            wandb.log_artifact(model_artifact)
-            print(f"✅ Model logged to wandb as artifact: {model_artifact.name}") 
+    final_model_path = os.path.join(training_args.output_dir, "final")
+    trainer.save_model(final_model_path)
+    processor.save_pretrained(final_model_path)
+    print(f"Training completed! Model saved to: {final_model_path}")
 

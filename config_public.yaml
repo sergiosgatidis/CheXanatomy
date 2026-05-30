@@ -1,0 +1,75 @@
+# CheXanatomy Paligemma Training Configuration
+# Publication-safe example config with placeholder paths and no private account details.
+
+# Model Configuration
+model:
+  model_size: 3          # Available: 3, 10, 28 (for 3b, 10b, 28b models)
+  input_image_size: 224  # Available: 224, 448, 896
+
+# Training Data
+data:
+  training_data_path: "/path/to/CT_RATE_training_data"
+  train_val_split: 0.01  # 1% for validation
+  enable_augmentation: true
+  max_structures_for_multistructure_tasks: 5
+
+  # Available task types for training
+  available_tasks:
+    - "detection"
+    - "segmentation"
+    - "orientation_identification"
+
+# Training Hyperparameters
+training:
+  num_train_epochs: 50
+  max_steps: -1          # -1 = ignore, use num_train_epochs
+  per_device_train_batch_size: 24
+  per_device_eval_batch_size: 24
+  gradient_accumulation_steps: 1
+  auto_find_batch_size: true
+  learning_rate: 5.0e-5
+  weight_decay: 0.01
+  adam_beta2: 0.999
+  warmup_steps: 2
+
+# Logging and Saving
+logging:
+  logging_steps: 100
+  save_total_limit: 5
+  run_name: "chexanatomy_paligemma_run"
+
+# Optimization Strategy
+optimization:
+  use_lora: true
+  use_qlora: false
+  freeze_vision_tower: true
+  freeze_mm_projector: false
+  lora_r: 16
+  lora_target_modules:
+    - "q_proj"
+    - "o_proj"
+    - "k_proj"
+    - "v_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+
+# Paths
+paths:
+  model_output_dir: "/path/to/output_models"
+  vqvae_model_path: "./models/vae-oid.npz"
+
+# Optional experiment tracking
+wandb:
+  project: ""
+  entity: ""
+  tags:
+    - "paligemma"
+    - "chest-xray"
+    - "anatomy"
+    - "vision-language"
+    - "medical-ai"
+  notes: ""
+  log_model: false
+  log_freq: 50
+  save_code: false

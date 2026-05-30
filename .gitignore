@@ -45,6 +45,14 @@ Thumbs.db
 outputs/
 *.log
 *.tmp
+*.out
+
+# Local experiment and demo artifacts
+chexanatomy.egg-info/
+demo/generated_npz_demo/
+demo/training_demo_npz/
+demo/training_demo_runs/
+demo/.ipynb_checkpoints/
 
 # Model files (too large for git)
 # But keep vae-oid.npz as it's essential
@@ -57,3 +65,7 @@ models/*.pkl
 # Data directories (usually too large)
 data/
 datasets/wandb/
+wandb/
+
+# Local configuration files
+config.yaml
