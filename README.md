@@ -2,6 +2,8 @@
 
 A comprehensive training data generation pipeline for chest X-ray analysis using Paligemma vision-language models, featuring anatomical structure detection, segmentation token generation, and advanced data augmentation.
 
+Synthetic chest X-ray training data for this pipeline can be generated from the CT-RATE dataset (https://huggingface.co/datasets/ibrahimhamamci/CT-RATE) using the CheXsynth repository: [sergiosgatidis/CheXsynth: Synthetic Chest Radiograph Generation from 3D CT volumes](https://github.com/sergiosgatidis/CheXsynth).
+
 ## Project Structure
 
 ```
