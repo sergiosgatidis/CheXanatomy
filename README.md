@@ -13,6 +13,10 @@ CheXanatomy integrates explicit anatomical knowledge into a pretrained vision-la
 
 The repository contains the code used to generate anatomy-aware training data, construct autoregressive supervision targets, train the model, and run the demo workflows used in the paper. Synthetic chest radiograph training data can be generated from the CT-RATE dataset using the CheXsynth repository: [sergiosgatidis/CheXsynth: Synthetic Chest Radiograph Generation from 3D CT volumes](https://github.com/sergiosgatidis/CheXsynth).
 
+![Overview of CheXanatomy](CheXanatomy.png)
+
+*Overview of CheXanatomy. CT volumes with anatomic labels are projected into synthetic CXRs, and bounding boxes and segmentation masks are encoded into structured tokens. A pretrained vision-language model based on the PaliGemma architecture is fine-tuned to autoregressively generate anatomical bounding boxes and segmentations via next-token prediction. The trained model approaches convolutional baselines in-distribution and demonstrates improved geometric robustness under domain shift, while supporting adaptation to new localization tasks. Unlike conventional segmentation networks, no task-specific decoder heads are introduced, and supervision is applied entirely in token space.*
+
 ## Repository Overview
 
 This codebase supports the main components of the CheXanatomy paper:
