@@ -1,8 +1,26 @@
-# CheXanatomy: Chest X-ray Vision-Language Model Training Pipeline
+# CheXanatomy: Anatomy-Aware Vision-Language Modeling for Chest Radiographs
 
-A comprehensive training data generation pipeline for chest X-ray analysis using Paligemma vision-language models, featuring anatomical structure detection, segmentation token generation, and advanced data augmentation.
+This repository accompanies the paper *CheXanatomy: Anatomy-Aware Vision-Language Modeling for Chest Radiographs*.
 
-Synthetic chest X-ray training data for this pipeline can be generated from the CT-RATE dataset (https://huggingface.co/datasets/ibrahimhamamci/CT-RATE) using the CheXsynth repository: [sergiosgatidis/CheXsynth: Synthetic Chest Radiograph Generation from 3D CT volumes](https://github.com/sergiosgatidis/CheXsynth).
+**Sergios Gatidis, Curtis Langlotz, Christian Bluethgen**  
+Stanford Center for Artificial Intelligence in Medicine and Imaging, Stanford University  
+Department of Radiology, Stanford University
+
+**Abstract**  
+Vision-language models pretrained on large-scale image-text pairs demonstrate strong image-level understanding, but are primarily optimized for global alignment and do not explicitly encode fine-grained anatomical structure, limiting their suitability for spatially precise tasks such as segmentation.
+
+CheXanatomy integrates explicit anatomical knowledge into a pretrained vision-language model through autoregressive token-space supervision. Instead of adding task-specific decoder heads, the model is trained to generate anatomical segmentation masks via next-token prediction. To enable scalable supervision, the framework synthesizes realistic chest radiographs from CT volumes and forward-projects CT segmentation labels to obtain anatomically consistent 2D masks.
+
+The repository contains the code used to generate anatomy-aware training data, construct autoregressive supervision targets, train the model, and run the demo workflows used in the paper. Synthetic chest radiograph training data can be generated from the CT-RATE dataset using the CheXsynth repository: [sergiosgatidis/CheXsynth: Synthetic Chest Radiograph Generation from 3D CT volumes](https://github.com/sergiosgatidis/CheXsynth).
+
+## Repository Overview
+
+This codebase supports the main components of the CheXanatomy paper:
+
+- generation of anatomically consistent 2D supervision from CT-derived labels
+- autoregressive anatomy supervision using location and segmentation tokens
+- training and evaluation workflows for anatomy-aware chest radiograph VLMs
+- lightweight demo notebooks for data generation, training, and inference
 
 ## Project Structure
 
@@ -39,9 +57,9 @@ cheXanatomy/
 └── CT_RATE_demo_data/                # Small demo dataset for notebooks and examples
 ```
 
-## Core Training Tasks & Capabilities
+## Training Tasks
 
-The system generates **6 comprehensive task types** for robust vision-language model training:
+The training pipeline supports multiple anatomy-aware supervision tasks:
 
 ### 1. **Detection Tasks**
 - `detect heart` → `<loc0400><loc0312><loc0703><loc0625> heart`
@@ -59,22 +77,22 @@ The system generates **6 comprehensive task types** for robust vision-language m
 - `caption <seg045><seg023>...<seg089>` → `lung`
 - Enables structure recognition from segmentation tokens
 
-### 5. **Visual Bbox Identification** ✨ NEW
+### 5. **Visual Bbox Identification**
 - Shows bounding box overlay on image → `heart`
 - Teaches visual pattern recognition with spatial boundaries
 
-### 6. **Visual Mask Identification** ✨ NEW  
+### 6. **Visual Mask Identification**
 - Shows segmentation mask overlay on image → `lung`
 - Provides shape-based visual learning with precise anatomical boundaries
 
-## Advanced Features
+## Repository Features
 
-- **🚀 Parallel Batch Processing**: Efficient NPZ generation from large CT datasets
-- **🎯 Data Augmentation**: Random scale, position, and rotation with synchronized token updates
-- **🔄 Coordinate Conversion**: Bidirectional token ↔ coordinate transformation utilities
-- **📊 Multi-Dataset Support**: Handles PA and LR projections with orientation-specific processing
-- **🎨 Visual Training Tasks**: Image overlays for enhanced spatial understanding
-- **⚡ GPU Acceleration**: TensorFlow-optimized VQVAE encoding and mask generation
+- Efficient NPZ generation from large CT-derived datasets
+- Data augmentation with synchronized token updates
+- Bidirectional coordinate and token conversion utilities
+- Support for PA and LR projection data
+- Visual anatomy supervision tasks with overlays
+- TensorFlow and JAX-based VQ-VAE utilities for mask encoding and decoding
 
 ## Quick Start
 
@@ -86,19 +104,21 @@ cd cheXanatomy
 pip install -e .
 ```
 
-### 2. Generate Training Data from CT-RATE Dataset
+### 2. Generate Training Data
 
 ```bash
-# Batch process PA projections (parallel processing supported)
+# Batch process PA projections
 python training_file_generation/batch_training_object_generation.py \
   --input_dir /path/to/CT_RATE_projections_PA \
   --output_dir /path/to/training_data
 
-# Batch process LR projections  
+# Batch process LR projections
 python training_file_generation/batch_training_object_generation.py \
   --input_dir /path/to/CT_RATE_projections_LR \
   --output_dir /path/to/training_data
 ```
+
+If you need to synthesize chest radiographs from CT volumes first, use the CT-RATE dataset together with [CheXsynth](https://github.com/sergiosgatidis/CheXsynth), then process the resulting projections with this repository.
 
 ### 3. Generate Training Samples
 
@@ -124,7 +144,7 @@ print(f"Answer: {detection_sample.suffix}")
 python training/train_paligemma.py --config config_public.yaml
 ```
 
-## Detailed Usage
+## Usage
 
 ### Data Processing Pipeline
 
@@ -174,7 +194,7 @@ sample = generator.generate_sample('detection', 'lung')
 # Updates bounding boxes and segmentation tokens accordingly
 ```
 
-### Interactive Development
+### Demo Notebooks
 
 #### Focused Demo Notebooks
 ```bash
@@ -237,7 +257,7 @@ TrainingSample(
 )
 ```
 
-## System Requirements & Performance
+## Environment
 
 ### Hardware Requirements
 - **CPU**: Multi-core processor (parallel processing supported)
@@ -251,12 +271,6 @@ TrainingSample(
 - **PIL/Pillow**: Image processing
 - **NumPy**: Array operations  
 - **Conda**: Environment management
-
-### Performance Benchmarks
-- **Single case processing**: ~2-5 seconds per case
-- **Batch processing**: ~500-1000 cases/hour (GPU accelerated)
-- **Parallel processing**: 2x speedup with dual PA/LR jobs
-- **Memory usage**: 1-3GB per processing job
 
 ## License & Citation
 
@@ -273,10 +287,11 @@ See `LICENSES/Apache-2.0.txt` for the Apache 2.0 license text and `models/vae-oi
 If you use this code in your research, please cite:
 
 ```bibtex
-@software{chexanatomy2026,
-  title={CheXanatomy: Chest X-ray Vision-Language Model Training Pipeline},
-  author={Sergios Gatidis},
+@article{gatidis2026chexanatomy,
+  title={CheXanatomy: Anatomy-Aware Vision-Language Modeling for Chest Radiographs},
+  author={Gatidis, Sergios and Langlotz, Curtis and Bluethgen, Christian},
   year={2026},
-  url={https://github.com/sergiosgatidis/cheXanatomy}
+  journal={arXiv preprint arXiv:submit/7658503},
+  url={https://github.com/sergiosgatidis/CheXanatomy}
 }
 ```
