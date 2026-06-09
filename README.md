@@ -2,6 +2,8 @@
 
 This repository accompanies the paper *CheXanatomy: Anatomy-Aware Vision-Language Modeling for Chest Radiographs*.
 
+Paper: [arXiv:2606.08420](https://arxiv.org/abs/2606.08420)
+
 **Sergios Gatidis, Curtis Langlotz, Christian Bluethgen**  
 Stanford Center for Artificial Intelligence in Medicine and Imaging, Stanford University  
 Department of Radiology, Stanford University
@@ -299,7 +301,7 @@ If you use this code in your research, please cite:
   title={CheXanatomy: Anatomy-Aware Vision-Language Modeling for Chest Radiographs},
   author={Gatidis, Sergios and Langlotz, Curtis and Bluethgen, Christian},
   year={2026},
-  journal={arXiv preprint arXiv:submit/7658503},
-  url={https://github.com/sergiosgatidis/CheXanatomy}
+  journal={arXiv preprint arXiv:2606.08420},
+  url={https://arxiv.org/abs/2606.08420}
 }
 ```
