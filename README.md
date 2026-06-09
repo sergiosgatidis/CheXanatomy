@@ -4,6 +4,8 @@ This repository accompanies the paper *CheXanatomy: Anatomy-Aware Vision-Languag
 
 Paper: [arXiv:2606.08420](https://arxiv.org/abs/2606.08420)
 
+Demo: [Hugging Face Space](https://huggingface.co/spaces/sgatidis/CheXanatomy)
+
 **Sergios Gatidis, Curtis Langlotz, Christian Bluethgen**  
 Stanford Center for Artificial Intelligence in Medicine and Imaging, Stanford University  
 Department of Radiology, Stanford University
