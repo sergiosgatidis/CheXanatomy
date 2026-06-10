@@ -20,6 +20,7 @@ The repository contains the code used to generate anatomy-aware training data, c
 A public CheXanatomy adapter release is available on Hugging Face:
 
 [StanfordAIMI/chexanatomy-paligemma-3b-224](https://huggingface.co/StanfordAIMI/chexanatomy-paligemma-3b-224)
+
 [StanfordAIMI/chexanatomy-paligemma-10b-224](https://huggingface.co/StanfordAIMI/chexanatomy-paligemma-10b-224)
 
 ![Overview of CheXanatomy](CheXanatomy.png)
