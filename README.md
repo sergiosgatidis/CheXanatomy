@@ -4,7 +4,7 @@ This repository accompanies the paper *CheXanatomy: Anatomy-Aware Vision-Languag
 
 Paper: [arXiv:2606.08420](https://arxiv.org/abs/2606.08420)
 
-Demo: [Hugging Face Space](https://huggingface.co/spaces/sgatidis/CheXanatomy)
+Demo: [Hugging Face Space](https://huggingface.co/spaces/StanfordAIMI/CheXanatomy)
 
 **Sergios Gatidis, Curtis Langlotz, Christian Bluethgen**  
 Stanford Center for Artificial Intelligence in Medicine and Imaging, Stanford University  
@@ -17,7 +17,10 @@ CheXanatomy integrates explicit anatomical knowledge into a pretrained vision-la
 
 The repository contains the code used to generate anatomy-aware training data, construct autoregressive supervision targets, train the model, and run the demo workflows used in the paper. Synthetic chest radiograph training data can be generated from the CT-RATE dataset using the CheXsynth repository: [sergiosgatidis/CheXsynth: Synthetic Chest Radiograph Generation from 3D CT volumes](https://github.com/sergiosgatidis/CheXsynth).
 
-A public CheXanatomy adapter release is available on Hugging Face: [sgatidis/chexanatomy-paligemma-3b-224](https://huggingface.co/sgatidis/chexanatomy-paligemma-3b-224).
+A public CheXanatomy adapter release is available on Hugging Face:
+
+[StanfordAIMI/chexanatomy-paligemma-3b-224](https://huggingface.co/StanfordAIMI/chexanatomy-paligemma-3b-224)
+[StanfordAIMI/chexanatomy-paligemma-10b-224](https://huggingface.co/StanfordAIMI/chexanatomy-paligemma-10b-224)
 
 ![Overview of CheXanatomy](CheXanatomy.png)
 
